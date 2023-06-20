@@ -13,7 +13,7 @@ import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_library/widgets/city_selection.dart';
-import 'package:kasie_transie_route_builder/ui/maps/creator_map.dart';
+import 'package:kasie_transie_route_builder/ui/maps/route_creator_map.dart';
 import 'package:realm/realm.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:uuid/uuid.dart' as uu;
@@ -95,7 +95,6 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
         radiusInKM: radius));
     // _cities.sort((a, b) => a.name!.compareTo(b.name!));
     pp('$mm cities found by location: ${_cities.length} cities within $radius km ....');
-// e11a06ac-397e-482e-8e4d-015cbc9cb135
     setState(() {
       busy = false;
     });
@@ -215,7 +214,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     try {
       final m = await dataApiDog.addRoute(route);
       if (mounted) {
-        navigateWithScale(CreatorMapMobile(route: m), context);
+        navigateWithScale(RouteCreatorMap(route: m), context);
       }
     } catch (e) {
       pp(e);

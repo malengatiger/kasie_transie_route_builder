@@ -42,7 +42,7 @@ class RouteMapEditorState extends State<RouteMapEditor>
   }
 
   void _getData() async {
-    widget.listApiDog.getRoutePoints(widget.route.routeId!);
+    widget.listApiDog.getRoutePoints(widget.route.routeId!, true);
   }
 
   Future<void> _addMarkers() async {

@@ -50,6 +50,8 @@ dependencies:
   flutter_riverpod: ^2.3.6
   pretty_json: ^2.0.0
   geolocator: ^9.0.2
+  focused_menu: ^1.0.5
+
   flutter_polyline_points:
   dots_indicator:
   realm:

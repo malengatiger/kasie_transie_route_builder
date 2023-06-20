@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:badges/badges.dart' as bd;
+import 'package:focused_menu/focused_menu.dart';
+import 'package:focused_menu/modals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasie_transie_library/bloc/data_api_dog.dart';
@@ -12,7 +14,8 @@ import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_route_builder/ui/route_detail_form.dart';
-
+import 'maps/route_creator_map.dart';
+import 'maps/route_map_viewer.dart';
 
 class AssociationRoutes extends ConsumerStatefulWidget {
   final AssociationParameter parameter;
@@ -45,12 +48,11 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
       pp('$mm listApiDog.routeStream delivered: ${routesFromStream.length}');
       routes = routesFromStream;
       if (mounted) {
-        setState(() {
-
-        });
+        setState(() {});
       }
     });
   }
+
   void _getUser() async {
     setState(() {
       busy = true;
@@ -65,14 +67,74 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     });
   }
 
+  List<FocusedMenuItem> _getMenuItems(BuildContext context, lib.Route route) {
+    List<FocusedMenuItem> list = [];
+
+    list.add(FocusedMenuItem(
+        title: Text('View Route Map', style: myTextStyleMediumBlack(context)),
+        // backgroundColor: Theme.of(context).primaryColor,
+        trailingIcon: Icon(
+          Icons.map,
+          color: Theme.of(context).primaryColor,
+        ),
+        onPressed: () {
+          navigateToMapViewer(route);
+        }));
+    //
+    list.add(FocusedMenuItem(
+        title: Text('Route Landmarks', style: myTextStyleMediumBlack(context)),
+        trailingIcon: Icon(
+          Icons.water_damage_outlined,
+          color: Theme.of(context).primaryColor,
+        ),
+        onPressed: () {
+          navigateToLandmarks(route);
+        }));
+    //
+    list.add(FocusedMenuItem(
+        title: Text('Update Route', style: myTextStyleMediumBlack(context)),
+        // backgroundColor: Theme.of(context).primaryColor,
+        trailingIcon: Icon(
+          Icons.edit,
+          color: Theme.of(context).primaryColor,
+        ),
+        onPressed: () {
+          navigateToCreatorMap(route);
+        }));
+
+    return list;
+  }
+
+  void navigateToLandmarks(lib.Route route) {
+    pp('$mm navigateToLandmarksEditor .....  ');
+  }
+
+  void navigateToMapViewer(lib.Route route) {
+    pp('$mm navigateToMapViewer .....  ');
+    navigateWithScale(
+        RouteMapViewer(
+          route: route,
+        ),
+        context);
+  }
+
+  void navigateToCreatorMap(lib.Route route) {
+    pp('$mm navigateToCreatorMap .....  ');
+    navigateWithScale(
+        RouteCreatorMap(
+          route: route,
+        ),
+        context);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (user != null) {
-      final k = ref.watch(routesProvider(AssociationParameter(user!.associationId!, true)));
+      final k = ref.watch(
+          routesProvider(AssociationParameter(user!.associationId!, true)));
       if (k.hasValue) {
         routes = k.value!;
         pp('$mm routesProvider.ref delivered: ${routes.length}');
-
       } else {
         pp('$mm routesProvider has no value yet; ${E.redDot} delivered nothing');
       }
@@ -133,7 +195,8 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                     ),
                                     Text(
                                       'Finding the Association taxi routes ...',
-                                      style: myTextStyleMediumWithColor( context, Theme.of(context).primaryColor),
+                                      style: myTextStyleSmallWithColor(context,
+                                          Theme.of(context).primaryColor),
                                     ),
                                     const SizedBox(
                                       height: 24,
@@ -154,25 +217,27 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                         elevation: 2,
                         shape: getRoundedBorder(radius: 16),
                         child: Padding(
-                          padding: const EdgeInsets.only(top:16.0),
+                          padding: const EdgeInsets.only(top: 16.0),
                           child: ListView.builder(
                               itemCount: routes.length,
                               itemBuilder: (ctx, index) {
                                 final rt = routes.elementAt(index);
-                                return GestureDetector(
-                                  onTap: () {
-                                    pp('....... _navigateToDetail with route: ${rt.name}');
-                                    navigateWithScale(
-                                        RouteDetailForm(
-                                            dataApiDog: dataApiDog, prefs: prefs),
-                                        context);
+                                return FocusedMenuHolder(
+                                  menuOffset: 24,
+                                  duration: const Duration(milliseconds: 300),
+                                  menuItems: _getMenuItems(context, rt),
+                                  animateMenuItems: true,
+                                  openWithTap: true,
+                                  onPressed: () {
+                                    pp('💛️️ tapped FocusedMenuHolder ...');
                                   },
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 1.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0, vertical: 1.0),
                                     child: Card(
                                       shape: getRoundedBorder(radius: 16),
                                       elevation: 6,
-                                      child:  Padding(
+                                      child: Padding(
                                         padding: const EdgeInsets.all(16.0),
                                         child: Text('${rt.name}'),
                                       ),
