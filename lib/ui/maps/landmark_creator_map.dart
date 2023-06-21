@@ -299,15 +299,17 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
         position: LatLng(routePoint!.position!.coordinates.last,
             routePoint!.position!.coordinates.first)));
 
+    setState(() {});
     var latLng = LatLng(routePoint!.position!.coordinates.last,
         routePoint!.position!.coordinates.first);
     var cameraPos = CameraPosition(target: latLng, zoom: defaultZoom);
 
     final GoogleMapController controller = await _mapController.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
+
     //
     _processNewLandmark();
-    setState(() {});
+
   }
 
   String? landmarkName;
@@ -317,7 +319,7 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
         longitude: routePoint!.position!.coordinates.first,
         routeId: widget.route.routeId!,
         radius: radius.toDouble(),
-        landmarkName: landmarkName!, limit: 10,
+        landmarkName: landmarkName!, limit: 15,
         associationId: widget.route.associationId!,
         routeName: widget.route.name!, authToken: '');
 

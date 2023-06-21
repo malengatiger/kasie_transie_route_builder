@@ -49,9 +49,13 @@ class RouteMapViewerState extends State<RouteMapViewer> {
 
   List<poly.PointLatLng>? polylinePoints;
   Color color = Colors.black;
+  var routeLandmarks = <lib.RouteLandmark>[];
+  int landmarkIndex = 0;
+
   @override
   void initState() {
     super.initState();
+    _buildLandmarkIcons();
     _getCurrentLocation();
     _getUser();
     color = _getColor();
@@ -89,6 +93,34 @@ class RouteMapViewerState extends State<RouteMapViewer> {
     }
   }
 
+  Future _getRouteLandmarks() async {
+    routeLandmarks =
+    await listApiDog.getRouteLandmarks(widget.route.routeId!, true);
+    pp('$mm _getRouteLandmarks ...  route: ${widget.route.name}; found: ${routeLandmarks.length} ');
+
+    landmarkIndex = 0;
+    for (var landmark in routeLandmarks) {
+      final latLng = LatLng(landmark.position!.coordinates.last,
+          landmark.position!.coordinates.first);
+      _markers.add(Marker(
+          markerId: MarkerId('${landmark.landmarkId}'),
+          icon: numberMarkers.elementAt(landmarkIndex),
+          onTap: () {
+            pp('$mm .............. marker tapped: $index');
+            //_deleteRoutePoint(routePoint);
+          },
+          infoWindow: InfoWindow(
+              snippet: 'This landmark is part of the route.',
+              title: '🔵 ${landmark.landmarkName}',
+              onTap: () {
+                pp('$mm ............. infoWindow tapped, point index: $index');
+                //_deleteLandmark(landmark);
+              }),
+          position: latLng));
+      landmarkIndex++;
+    }
+    setState(() {});
+  }
   Future _getRoutePoints(bool refresh) async {
     setState(() {
       busy = true;
@@ -146,6 +178,15 @@ class RouteMapViewerState extends State<RouteMapViewer> {
   }
 
   int index = 0;
+  final numberMarkers = <BitmapDescriptor>[];
+  Future _buildLandmarkIcons() async {
+    for (var i = 0; i < 100; i++) {
+      var intList =
+      await getBytesFromAsset("assets/numbers/number_${i + 1}.png", 84);
+      numberMarkers.add(BitmapDescriptor.fromBytes(intList));
+    }
+    pp('$mm have built ${numberMarkers.length} markers for landmarks');
+  }
 
 
   _clearMap() {
@@ -195,10 +236,12 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                   onTap: (latLng) {
                     pp('$mm .......... on map tapped : $latLng .');
                   },
-                  onMapCreated: (GoogleMapController controller) {
+                  onMapCreated: (GoogleMapController controller) async {
                     _mapController.complete(controller);
                     _zoomToStartCity();
-                    _getRoutePoints(false);
+                    await _getRoutePoints(false);
+                    _getRouteLandmarks();
+
                   },
                 ),
                 Positioned(
