@@ -28,7 +28,7 @@ class RouteMapViewer extends StatefulWidget {
 }
 
 class RouteMapViewerState extends State<RouteMapViewer> {
-  static const DEFAULT_ZOOM = 10.0;
+  static const defaultZoom = 10.0;
   final Completer<GoogleMapController> _mapController = Completer();
 
   CameraPosition? _myCurrentCameraPosition;
@@ -128,7 +128,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
     pp('$mm .......... get current location ....  🍎 found: ${_currentPosition!.toJson()}');
     _myCurrentCameraPosition = CameraPosition(
       target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-      zoom: DEFAULT_ZOOM,
+      zoom: defaultZoom,
     );
     setState(() {});
   }
@@ -138,7 +138,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
       final latLng = LatLng(
           widget.route.routeStartEnd!.startCityPosition!.coordinates.last,
           widget.route.routeStartEnd!.startCityPosition!.coordinates.first);
-      var cameraPos = CameraPosition(target: latLng, zoom: 13.0);
+      var cameraPos = CameraPosition(target: latLng, zoom: 11.0);
       final GoogleMapController controller = await _mapController.future;
       controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
       setState(() {});

@@ -31,7 +31,8 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   static const defaultZoom = 16.0;
   final Completer<GoogleMapController> _mapController = Completer();
 
-  CameraPosition? _myCurrentCameraPosition;
+  CameraPosition _myCurrentCameraPosition =
+      const CameraPosition(target: LatLng(-26.5, 27.6), zoom: 14.6);
   static const mm = '💟💟💟💟💟💟💟💟💟💟 RouteCreatorMap: 💪 ';
   final _key = GlobalKey<ScaffoldState>();
   bool busy = false;
@@ -58,7 +59,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
+    _makeDotMarker();
     _getUser();
   }
 
@@ -68,58 +69,65 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
     });
     try {
       _user = await prefs.getUser();
-      pp('$mm getting existing RoutePoints .......');
+      pp('$mm getting existing RoutePoints ....... refresh: $refresh');
       existingRoutePoints =
           await listApiDog.getRoutePoints(widget.route.routeId!, refresh);
-
       pp('$mm .......... existingRoutePoints ....  🍎 found: '
           '${existingRoutePoints.length} points');
       _buildExistingMarkers();
     } catch (e) {
       pp(e);
     }
+    // setState(() {
+    //   busy = false;
+    // });
+  }
+
+  Future<void> _buildExistingMarkers() async {
+    _clearMap();
+    setState(() {
+      busy = true;
+    });
+    await _makeDotMarker();
+    if (existingRoutePoints.isNotEmpty) {
+      for (var routePoint in existingRoutePoints) {
+        var latLng = LatLng(routePoint.position!.coordinates.last,
+            routePoint.position!.coordinates.first);
+        _markers.add(Marker(
+            markerId: MarkerId('${routePoint.routePointId}'),
+            icon: _dotMarker!,
+            onTap: () {
+              pp('$mm .............. ${E.pear}${E.pear}${E.pear} '
+                  'marker tapped: routePointId: ${routePoint.toJson()}');
+            },
+            infoWindow: InfoWindow(
+                title: 'RoutePoint ${index + 1}',
+                snippet: "This route point is part of the route. Tap to remove",
+                onTap: () {
+                  pp('$mm ............. infoWindow tapped: ${index + 1}');
+                  _deleteRoutePoint(routePoint);
+                }),
+            position: LatLng(latLng.latitude, latLng.longitude)));
+      }
+      var last = existingRoutePoints.last;
+      final latLng = LatLng(
+          last.position!.coordinates.last, last.position!.coordinates.first);
+      totalPoints = existingRoutePoints.length;
+      index = existingRoutePoints.length - 1;
+
+      var cameraPos = CameraPosition(target: latLng, zoom: 13.0);
+      final GoogleMapController controller = await _mapController.future;
+      await controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
+    }
     setState(() {
       busy = false;
     });
   }
 
-  Future<void> _buildExistingMarkers() async {
-    _clearMap();
-    for (var routePoint in existingRoutePoints) {
-      var latLng = LatLng(routePoint.position!.coordinates.last,
-          routePoint.position!.coordinates.first);
-      _markers.add(Marker(
-          markerId: MarkerId('${routePoint.routePointId}'),
-          icon: _dotMarker!,
-          onTap: () {
-            pp('$mm .............. ${E.pear}${E.pear}${E.pear} marker tapped: routePointId: ${routePoint.toJson()}');
-          },
-          infoWindow: InfoWindow(
-              title: 'RoutePoint ${index + 1}',
-              snippet: "This route point is part of the route. Tap to remove",
-              onTap: () {
-                pp('$mm ............. infoWindow tapped: ${index + 1}');
-                _deleteRoutePoint(routePoint);
-              }),
-          position: LatLng(latLng.latitude, latLng.longitude)));
-    }
-    var last = existingRoutePoints.last;
-    final latLng = LatLng(
-        last.position!.coordinates.last, last.position!.coordinates.first);
-    totalPoints = existingRoutePoints.length;
-    index = existingRoutePoints.length - 1;
-    var cameraPos = CameraPosition(target: latLng, zoom: 13.0);
-    final GoogleMapController controller = await _mapController.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
-    setState(() {});
-  }
-
   void _clearMap() {
     _polyLines.clear();
     _markers.clear();
-    setState(() {
-
-    });
+    setState(() {});
   }
 
   @override
@@ -183,6 +191,8 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
         pp('$mm ... this is probably a rogue routePoint: ${E.redDot} '
             'distance from previous point: $dist metres');
         return false;
+      } else {
+        pp('$mm distance from previous point: ${E.appleGreen} $dist metres');
       }
     }
     return true;
@@ -211,7 +221,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
         icon: _dotMarker!,
         onTap: () {
           pp('$mm .............. marker tapped: $index');
-          _deleteRoutePoint(routePoint);
+          // _deleteRoutePoint(routePoint);
         },
         infoWindow: InfoWindow(
             snippet: 'This point is part of the route. Tap to remove',
@@ -295,14 +305,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   Widget build(BuildContext context) {
     return Scaffold(
         key: _key,
-        body: _myCurrentCameraPosition == null
-            ? Center(
-                child: Text(
-                  'Waiting for GPS location ...',
-                  style: myTextStyleMediumBold(context),
-                ),
-              )
-            : Stack(children: [
+        body: Stack(children: [
                 GoogleMap(
                   mapType: isHybrid ? MapType.hybrid : MapType.normal,
                   myLocationEnabled: true,
@@ -394,7 +397,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
                                 _getRoutePoints(true);
                               },
                               icon: Icon(
-                                Icons.toggle_on,
+                                Icons.refresh,
                                 color: Theme.of(context).primaryColor,
                               ))
                         ],
@@ -402,14 +405,16 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
                     )),
                 busy
                     ? const Positioned(
+                        left: 100,
+                        top: 160,
                         child: SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 12,
-                          backgroundColor: Colors.purple,
-                        ),
-                      ))
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 12,
+                            backgroundColor: Colors.purple,
+                          ),
+                        ))
                     : const SizedBox(),
               ]));
   }

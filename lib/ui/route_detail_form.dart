@@ -11,6 +11,7 @@ import 'package:kasie_transie_library/utils/device_location_bloc.dart';
 import 'package:kasie_transie_library/utils/emojis.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
+import 'package:kasie_transie_library/utils/parsers.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_library/widgets/city_selection.dart';
 import 'package:kasie_transie_route_builder/ui/maps/route_creator_map.dart';
@@ -91,7 +92,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     _cities = await listApiDog.findCitiesByLocation(LocationFinderParameter(
         associationId: user!.associationId,
         latitude: loc.latitude,
-        longitude: loc.longitude,
+        longitude: loc.longitude, limit: 100,
         radiusInKM: radius));
     // _cities.sort((a, b) => a.name!.compareTo(b.name!));
     pp('$mm cities found by location: ${_cities.length} cities within $radius km ....');
@@ -182,11 +183,11 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
       endCityId: endCity!.cityId!,
       endCityName: endCity!.name,
       startCityPosition: Position(
-        type: 'Point',
+        type: point,
         coordinates: startCity!.position!.coordinates,
       ),
       endCityPosition: Position(
-        type: 'Point',
+        type: point,
         coordinates: endCity!.position!.coordinates,
       ),
     );
@@ -198,7 +199,6 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
       associationName: user!.associationName,
       lengthInMetres: 0,
       routeStartEnd: se,
-      landmarkIds: [],
       created: DateTime.now().toUtc().toIso8601String(),
       color: colorString,
       userId: user!.userId,

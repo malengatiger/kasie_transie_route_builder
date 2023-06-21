@@ -91,7 +91,7 @@ class KasieTransieApp extends ConsumerWidget {
 
                 splashTransition: SplashTransition.fadeTransition,
                 pageTransitionType: PageTransitionType.leftToRight,
-                backgroundColor: Colors.pink.shade900,
+                backgroundColor: Colors.teal.shade900,
               ));
         });
   }

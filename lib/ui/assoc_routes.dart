@@ -13,6 +13,7 @@ import 'package:kasie_transie_library/utils/emojis.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
+import 'package:kasie_transie_route_builder/ui/maps/landmark_creator_map.dart';
 import 'package:kasie_transie_route_builder/ui/route_detail_form.dart';
 import 'maps/route_creator_map.dart';
 import 'maps/route_map_viewer.dart';
@@ -107,6 +108,11 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
 
   void navigateToLandmarks(lib.Route route) {
     pp('$mm navigateToLandmarksEditor .....  ');
+    navigateWithScale(
+        LandmarkCreatorMap(
+          route: route,
+        ),
+        context);
   }
 
   void navigateToMapViewer(lib.Route route) {
@@ -131,7 +137,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   Widget build(BuildContext context) {
     if (user != null) {
       final k = ref.watch(
-          routesProvider(AssociationParameter(user!.associationId!, true)));
+          routesProvider(AssociationParameter(user!.associationId!, false)));
       if (k.hasValue) {
         routes = k.value!;
         pp('$mm routesProvider.ref delivered: ${routes.length}');
@@ -190,6 +196,12 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                 padding: const EdgeInsets.all(16.0),
                                 child: Column(
                                   children: [
+                                    const SizedBox(
+                                      height: 20,
+                                    ),
+                                    const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(
+                                      strokeWidth: 8, backgroundColor: Colors.teal,
+                                    ),),
                                     const SizedBox(
                                       height: 20,
                                     ),
