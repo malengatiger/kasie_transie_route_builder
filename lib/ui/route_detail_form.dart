@@ -54,7 +54,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     _controller = AnimationController(vsync: this);
     super.initState();
     _getUser();
-    _getCities(20.0);
+    _getCities(100.0);
   }
 
   void _getUser() async {
@@ -92,7 +92,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     _cities = await listApiDog.findCitiesByLocation(LocationFinderParameter(
         associationId: user!.associationId,
         latitude: loc.latitude,
-        longitude: loc.longitude, limit: 100,
+        longitude: loc.longitude, limit: 500,
         radiusInKM: radius));
     // _cities.sort((a, b) => a.name!.compareTo(b.name!));
     pp('$mm cities found by location: ${_cities.length} cities within $radius km ....');

@@ -179,21 +179,25 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
 
   bool checkDistance(LatLng latLng) {
     double? mLat, mLng;
-    if (index > 1) {
-      mLat = rpList.elementAt(index - 2).position!.coordinates.last;
-      mLng = rpList.elementAt(index - 2).position!.coordinates.first;
-      var dist = locationBloc.getDistance(
-          latitude: latLng.latitude,
-          longitude: latLng.longitude,
-          toLatitude: mLat,
-          toLongitude: mLng);
-      if (dist > 20) {
-        pp('$mm ... this is probably a rogue routePoint: ${E.redDot} '
-            'distance from previous point: $dist metres');
-        return false;
-      } else {
-        pp('$mm distance from previous point: ${E.appleGreen} $dist metres');
+    try {
+      if (index > 1) {
+        mLat = rpList.elementAt(index - 2).position!.coordinates.last;
+        mLng = rpList.elementAt(index - 2).position!.coordinates.first;
+        var dist = locationBloc.getDistance(
+            latitude: latLng.latitude,
+            longitude: latLng.longitude,
+            toLatitude: mLat,
+            toLongitude: mLng);
+        if (dist > 25) {
+          pp('$mm ... this is probably a rogue routePoint: ${E.redDot} '
+              '${E.redDot}${E.redDot} distance from previous point: $dist metres');
+          return false;
+        } else {
+          pp('$mm distance from previous point: ${E.appleGreen} $dist metres');
+        }
       }
+    } catch (e) {
+      pp('$mm checkDistance failed: ${E.redDot} ');
     }
     return true;
   }
@@ -306,116 +310,116 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
     return Scaffold(
         key: _key,
         body: Stack(children: [
-                GoogleMap(
-                  mapType: isHybrid ? MapType.hybrid : MapType.normal,
-                  myLocationEnabled: true,
-                  markers: _markers,
-                  circles: _circles,
-                  polylines: _polyLines,
-                  initialCameraPosition: _myCurrentCameraPosition!,
-                  onTap: _addNewRoutePoint,
-                  onMapCreated: (GoogleMapController controller) {
-                    _mapController.complete(controller);
-                    _zoomToStartCity();
-                    _getRoutePoints(false);
-                  },
+          GoogleMap(
+            mapType: isHybrid ? MapType.hybrid : MapType.normal,
+            myLocationEnabled: true,
+            markers: _markers,
+            circles: _circles,
+            polylines: _polyLines,
+            initialCameraPosition: _myCurrentCameraPosition!,
+            onTap: _addNewRoutePoint,
+            onMapCreated: (GoogleMapController controller) {
+              _mapController.complete(controller);
+              _zoomToStartCity();
+              _getRoutePoints(false);
+            },
+          ),
+          Positioned(
+              right: 12,
+              top: 120,
+              child: Container(
+                color: Colors.black45,
+                child: Padding(
+                  padding: const EdgeInsets.all(0.0),
+                  child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          isHybrid = !isHybrid;
+                        });
+                      },
+                      icon: Icon(
+                        Icons.album_outlined,
+                        color: isHybrid ? Colors.yellow : Colors.white,
+                      )),
                 ),
-                Positioned(
-                    right: 12,
-                    top: 120,
-                    child: Container(
-                      color: Colors.black45,
-                      child: Padding(
-                        padding: const EdgeInsets.all(0.0),
-                        child: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                isHybrid = !isHybrid;
-                              });
-                            },
-                            icon: Icon(
-                              Icons.album_outlined,
-                              color: isHybrid ? Colors.yellow : Colors.white,
-                            )),
-                      ),
-                    )),
-                Positioned(
-                    left: 12,
-                    top: 40,
-                    child: GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Card(
-                          color: Colors.black26,
-                          elevation: 24,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.arrow_back_ios,
-                                  size: 24,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(
-                                  width: 8,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    '${widget.route.name}',
-                                    style: myTextStyleSmallWithColor(
-                                        context, Colors.white),
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ))),
-                Positioned(
-                    left: 16,
-                    bottom: 40,
+              )),
+          Positioned(
+              left: 12,
+              top: 40,
+              child: GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Card(
+                    color: Colors.black26,
+                    elevation: 24,
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        '$totalPoints',
-                        style: myNumberStyleLargerWithColor(
-                            Colors.black26, 44, context),
-                      ),
-                    )),
-                Positioned(
-                    right: 12,
-                    top: 40,
-                    child: Card(
-                      elevation: 8,
-                      shape: getRoundedBorder(radius: 12),
                       child: Row(
                         children: [
-                          IconButton(
-                              onPressed: () {
-                                _getRoutePoints(true);
-                              },
-                              icon: Icon(
-                                Icons.refresh,
-                                color: Theme.of(context).primaryColor,
-                              ))
+                          const Icon(
+                            Icons.arrow_back_ios,
+                            size: 24,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(
+                            width: 8,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              '${widget.route.name}',
+                              style: myTextStyleSmallWithColor(
+                                  context, Colors.white),
+                            ),
+                          )
                         ],
                       ),
-                    )),
-                busy
-                    ? const Positioned(
-                        left: 100,
-                        top: 160,
-                        child: SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 12,
-                            backgroundColor: Colors.purple,
-                          ),
+                    ),
+                  ))),
+          Positioned(
+              left: 16,
+              bottom: 40,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  '$totalPoints',
+                  style:
+                      myNumberStyleLargerWithColor(Colors.black26, 44, context),
+                ),
+              )),
+          Positioned(
+              right: 12,
+              top: 40,
+              child: Card(
+                elevation: 8,
+                shape: getRoundedBorder(radius: 12),
+                child: Row(
+                  children: [
+                    IconButton(
+                        onPressed: () {
+                          _getRoutePoints(true);
+                        },
+                        icon: Icon(
+                          Icons.refresh,
+                          color: Theme.of(context).primaryColor,
                         ))
-                    : const SizedBox(),
-              ]));
+                  ],
+                ),
+              )),
+          busy
+              ? const Positioned(
+                  left: 100,
+                  top: 160,
+                  child: SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 12,
+                      backgroundColor: Colors.purple,
+                    ),
+                  ))
+              : const SizedBox(),
+        ]));
   }
 }
