@@ -67,18 +67,23 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
   @override
   void initState() {
     super.initState();
-    _getSettings();
-    _buildLandmarkIcons();
-    _getCurrentLocation();
+    _setup();
+  }
+
+  void _setup() async {
+    await _getSettings();
+    await _makeDotMarker();
+    await _buildLandmarkIcons();
+    await _getCurrentLocation();
     _getUser();
   }
 
-  void _getSettings() async {
+  Future _getSettings() async {
     settingsModel = await prefs.getSettings();
     if (settingsModel != null) {
       radius = settingsModel!.vehicleGeoQueryRadius!;
       if (radius == 0) {
-        radius = 25;
+        radius = 40;
       }
     }
   }
@@ -95,10 +100,27 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
   var routeLandmarks = <lib.RouteLandmark>[];
   var landmarkIndex = 0;
 
+  void _controlReads(bool refresh) async {
+    setState(() {
+      busy = true;
+    });
+    try {
+      _getLandmarksByLocation();
+      await _getRouteLandmarks();
+      await _getRoutePoints(refresh);
+
+    } catch (e) {
+      pp(e);
+    }
+    setState(() {
+      busy = false;
+    });
+  }
+
   Future _getRouteLandmarks() async {
     routeLandmarks =
         await listApiDog.getRouteLandmarks(widget.route.routeId!, true);
-    pp('$mm _getRouteLandmarks ...  route: ${widget.route.name}; found: ${routeLandmarks.length} ');
+    pp('\n\n$mm _getRouteLandmarks ...  ${E.appleRed} route: ${widget.route.name}; found: ${routeLandmarks.length} ');
 
     landmarkIndex = 0;
     for (var landmark in routeLandmarks) {
@@ -120,8 +142,17 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
               }),
           position: latLng));
       landmarkIndex++;
+      pp('$mm ... routeLandmark added to markers: ${_markers.length}');
     }
+    pp('$mm ... setting state .... and animating camera ...');
     setState(() {});
+    //
+    // var last = routeLandmarks.first;
+    // final latLng = LatLng(
+    //     last.position!.coordinates.last, last.position!.coordinates.first);
+    // var cameraPos = CameraPosition(target: latLng, zoom: 13.0);
+    // final GoogleMapController controller = await _mapController.future;
+    // await controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
   }
 
   Future _getLandmarksByLocation() async {
@@ -154,12 +185,10 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
   }
 
   Future _getRoutePoints(bool refresh) async {
-    setState(() {
-      busy = true;
-    });
+
     try {
       _user = await prefs.getUser();
-      pp('$mm getting existing RoutePoints .......');
+      pp('$mm ...... getting existing RoutePoints .......');
       existingRoutePoints =
           await listApiDog.getRoutePoints(widget.route.routeId!, refresh);
 
@@ -169,16 +198,18 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
     } catch (e) {
       pp(e);
     }
-    setState(() {
-      busy = false;
-    });
+
   }
 
   Future<void> _buildExistingRoutePointMarkers() async {
-    _clearMap();
+
+    pp('$mm .......... _buildExistingRoutePointMarkers starting ... ');
     if (existingRoutePoints.isEmpty) {
       pp('$mm route points empty. WTF?');
       return;
+    }
+    if (_dotMarker == null) {
+      await _makeDotMarker();
     }
     for (var routePoint in existingRoutePoints) {
       var latLng = LatLng(routePoint.position!.coordinates.last,
@@ -196,6 +227,8 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
           },
           position: LatLng(latLng.latitude, latLng.longitude)));
     }
+    setState(() {});
+    //
     var last = existingRoutePoints.last;
     final latLng = LatLng(
         last.position!.coordinates.last, last.position!.coordinates.first);
@@ -204,7 +237,7 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
     var cameraPos = CameraPosition(target: latLng, zoom: 13.0);
     final GoogleMapController controller = await _mapController.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
-    setState(() {});
+
   }
 
   bool _showLandmark = false;
@@ -221,7 +254,6 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
 
   Future _getUser() async {
     _user = await prefs.getUser();
-    _makeDotMarker();
   }
 
   Future _makeDotMarker() async {
@@ -309,7 +341,6 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
 
     //
     _processNewLandmark();
-
   }
 
   String? landmarkName;
@@ -319,9 +350,11 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
         longitude: routePoint!.position!.coordinates.first,
         routeId: widget.route.routeId!,
         radius: radius.toDouble(),
-        landmarkName: landmarkName!, limit: 15,
+        landmarkName: landmarkName!,
+        limit: 15,
         associationId: widget.route.associationId!,
-        routeName: widget.route.name!, authToken: '');
+        routeName: widget.route.name!,
+        authToken: '');
 
     landmarkIsolate.startIsolate(parameters);
     pp('$mm landmark isolate started! ... 😎😎😎 Good Fucking Luck!!');
@@ -358,9 +391,27 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
         key: _key,
         body: _myCurrentCameraPosition == null
             ? Center(
-                child: Text(
-                  'Waiting for GPS location ...',
-                  style: myTextStyleMediumBold(context),
+                child: SizedBox(
+                  height: 100,
+                  child: Column(
+                    children: [
+                      const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 6,
+                          backgroundColor: Colors.pink,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 48,
+                      ),
+                      Text(
+                        'Waiting for GPS location ...',
+                        style: myTextStyleMediumBold(context),
+                      ),
+                    ],
+                  ),
                 ),
               )
             : Stack(children: [
@@ -371,13 +422,10 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
                   circles: _circles,
                   polylines: _polyLines,
                   initialCameraPosition: _myCurrentCameraPosition!,
-                  onMapCreated: (GoogleMapController controller) {
+                  onMapCreated: (GoogleMapController controller) async {
                     _mapController.complete(controller);
                     _zoomToStartCity();
-                    _getRouteLandmarks();
-                    _getRoutePoints(false);
-
-                    _getLandmarksByLocation();
+                    _controlReads(false);
                   },
                 ),
                 Positioned(
@@ -413,45 +461,51 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
                           child: Padding(
                             padding: const EdgeInsets.all(4.0),
                             child: SizedBox(
-                              height: 80,
-                              child: Column(
-                                children: [
-                                  const SizedBox(
-                                    height: 4,
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        'Route Landmarks',
-                                        style: myTextStyleMediumLarge(context),
-                                      )
-                                    ],
-                                  ),
-                                  const SizedBox(
-                                    height: 4,
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.arrow_back_ios,
-                                        size: 18,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(
-                                        width: 2,
-                                      ),
-                                      Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Text(
-                                            '${widget.route.name}',
-                                            style: myTextStyleMediumWithColor(
-                                              context,
-                                              Colors.white,
-                                            ),
-                                          ))
-                                    ],
-                                  ),
-                                ],
+                              height: 108,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  children: [
+                                    const SizedBox(
+                                      height: 4,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'Route Landmarks',
+                                          style:
+                                              myTextStyleMediumLarge(context),
+                                        )
+                                      ],
+                                    ),
+                                    const SizedBox(
+                                      height: 4,
+                                    ),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.arrow_back_ios,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(
+                                          width: 2,
+                                        ),
+                                        Text(
+                                          '${widget.route.name}',
+                                          style: myTextStyleMediumWithColor(
+                                            context,
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      '${widget.route.associationName}',
+                                      style: myTextStyleTiny(context),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -477,9 +531,7 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
                         children: [
                           IconButton(
                               onPressed: () async {
-                                await _getRoutePoints(true);
-                                await _getRouteLandmarks();
-                                _getLandmarksByLocation();
+                                _controlReads(true);
                               },
                               icon: Icon(
                                 Icons.toggle_on,
@@ -490,65 +542,85 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
                     )),
                 _showLandmark
                     ? Positioned(
-                        bottom: 8, left: 20, right: 20,
-                        child: Card(
-                          shape: getRoundedBorder(radius: 16),
-                          color: Colors.black54,
-                          elevation: 8,
+                        bottom: 80,
+                        left: 20,
+                        right: 20,
                         child: SizedBox(
-                          height: 300,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                Text(
-                                  'New Landmark',
-                                  style: myTextStyleMediumLarge(context),
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                TextField(
-                                  controller: nameEditController,
-                                  decoration: InputDecoration(
-                                    label: const Text('Landmark/Taxi Stop Name'),
-                                    labelStyle: myTextStyleSmall(context),
-                                    hintText:
-                                        'Enter the name of the place',
-                                    icon: const Icon(Icons.water_damage_outlined),
+                          height: 320, width: 400,
+                          child: Card(
+                            shape: getRoundedBorder(radius: 16),
+                            color: Colors.black54,
+                            elevation: 8,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                children: [
+                                  Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                                    IconButton(onPressed: (){
+                                      setState(() {
+                                        _showLandmark = false;
+                                      });
+                                    }, icon: const Icon(Icons.close, color: Colors.white))
+                                  ],),
+                                  const SizedBox(
+                                    height: 20,
                                   ),
-                                ),
-                                const SizedBox(
-                                  height: 48,
-                                ),
-                                ElevatedButton(onPressed: (){
-                                  if (nameEditController.value.text.isEmpty) {
-                                    showSnackBar(message: 'Please enter the name',
-                                        context: context, padding: 16);
-                                  } else {
-                                    setState(() {
-                                      _showLandmark = false;
-                                    });
-                                    landmarkName = nameEditController.value.text;
-                                    _addNewLandmark();
-                                  }
-                                }, child: const Padding(
-                                  padding: EdgeInsets.only(left:28.0, right: 28, top: 16, bottom: 16),
-                                  child: Text('Save Landmark'),
-                                )),
-                              ],
+                                  Text(
+                                    'New Landmark',
+                                    style: myTextStyleMediumLarge(context),
+                                  ),
+                                  const SizedBox(
+                                    height: 20,
+                                  ),
+                                  TextField(
+                                    controller: nameEditController,
+                                    decoration: InputDecoration(
+                                      label:
+                                          const Text('Landmark/Taxi Stop Name'),
+                                      labelStyle: myTextStyleSmall(context),
+                                      hintText: 'Enter the name of the place',
+                                      icon: const Icon(
+                                          Icons.water_damage_outlined),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 48,
+                                  ),
+                                  ElevatedButton(
+                                      onPressed: () {
+                                        if (nameEditController
+                                            .value.text.isEmpty) {
+                                          showSnackBar(
+                                              message: 'Please enter the name',
+                                              context: context,
+                                              padding: 16);
+                                        } else {
+                                          setState(() {
+                                            _showLandmark = false;
+                                          });
+                                          landmarkName =
+                                              nameEditController.value.text;
+                                          _addNewLandmark();
+                                        }
+                                      },
+                                      child: const Padding(
+                                        padding: EdgeInsets.only(
+                                            left: 28.0,
+                                            right: 28,
+                                            top: 16,
+                                            bottom: 16),
+                                        child: Text('Save Landmark'),
+                                      )),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ))
+                        ))
                     : const SizedBox(),
                 busy
                     ? const Positioned(
-                        left: 100,
-                        top: 160,
+                        left: 300,
+                        top: 300,
                         child: SizedBox(
                           height: 24,
                           width: 24,

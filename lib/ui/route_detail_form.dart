@@ -16,7 +16,7 @@ import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_library/widgets/city_selection.dart';
 import 'package:kasie_transie_route_builder/ui/maps/route_creator_map.dart';
 import 'package:realm/realm.dart';
-import 'package:responsive_builder/responsive_builder.dart';
+import 'package:responsive_builder/responsive_builder.dart' as responsive;
 import 'package:uuid/uuid.dart' as uu;
 
 class RouteDetailForm extends ConsumerStatefulWidget {
@@ -84,18 +84,22 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     setState(() {
       busy = true;
     });
-    pp('... starting findCitiesByLocation 1...');
-    final loc = await locationBloc.getLocation();
-    user = await prefs.getUser();
-    pp('... ended location GPS .2..');
+    try {
+      pp('... starting findCitiesByLocation 1...');
+      final loc = await locationBloc.getLocation();
+      user = await prefs.getUser();
+      pp('... ended location GPS .2..');
 
-    _cities = await listApiDog.findCitiesByLocation(LocationFinderParameter(
-        associationId: user!.associationId,
-        latitude: loc.latitude,
-        longitude: loc.longitude, limit: 500,
-        radiusInKM: radius));
-    // _cities.sort((a, b) => a.name!.compareTo(b.name!));
-    pp('$mm cities found by location: ${_cities.length} cities within $radius km ....');
+      _cities = await listApiDog.findCitiesByLocation(LocationFinderParameter(
+              associationId: user!.associationId,
+              latitude: loc.latitude,
+              longitude: loc.longitude, limit: 500,
+              radiusInKM: radius));
+      // _cities.sort((a, b) => a.name!.compareTo(b.name!));
+      pp('$mm cities found by location: ${_cities.length} cities within $radius km ....');
+    } catch (e) {
+      pp(e);
+    }
     setState(() {
       busy = false;
     });
@@ -231,6 +235,11 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
 
   @override
   Widget build(BuildContext context) {
+    var leftPadding = 64.0;
+    final type = getDeviceType();
+    if (type == 'phone') {
+      leftPadding = 2.0;
+    }
     return SafeArea(
         child: Scaffold(
       appBar: AppBar(
@@ -243,7 +252,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
       ),
       body: Stack(
         children: [
-          ScreenTypeLayout.builder(
+          responsive.ScreenTypeLayout.builder(
             mobile: (ctx) {
               return Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -291,27 +300,27 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
           ),
           _showTheFuckingSearch
               ? Positioned(
-                  top: 60.0,
-                  bottom: 60.0,
-                  left: 24,
-                  right: 24,
-                  child: CitySearch(
-                    title: findStartCity ? 'Start of Route' : 'End of Route',
-                    showScaffold: false,
-                    onCitySelected: (c) {
-                      pp('.... city at start: ${c.name}');
-                      if (findEndCity) {
-                        endCity = c;
-                      }
-                      if (findStartCity) {
-                        startCity = c;
-                      }
-                      _setRouteName();
-                      setState(() {
-                        _showTheFuckingSearch = false;
-                      });
-                    },
-                    cities: _cities,
+                  top: 8.0,
+                  left: leftPadding,
+                  child: SizedBox(width: 600, height: 800,
+                    child: CitySearch(
+                      title: findStartCity ? 'Start of Route' : 'End of Route',
+                      showScaffold: true,
+                      onCitySelected: (c) {
+                        pp('.... city at start: ${c.name}');
+                        if (findEndCity) {
+                          endCity = c;
+                        }
+                        if (findStartCity) {
+                          startCity = c;
+                        }
+                        _setRouteName();
+                        setState(() {
+                          _showTheFuckingSearch = false;
+                        });
+                      },
+                      cities: _cities,
+                    ),
                   ))
               : const SizedBox(),
         ],

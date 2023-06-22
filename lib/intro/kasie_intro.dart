@@ -7,6 +7,8 @@ import 'package:kasie_transie_library/data/schemas.dart';
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
+import 'package:kasie_transie_library/auth/email_auth_signin.dart';
+
 import 'package:kasie_transie_library/utils/prefs.dart';
 
 import '../ui/assoc_routes.dart';
@@ -72,9 +74,23 @@ class KasieIntroState extends State<KasieIntro>
     setState(() {});
   }
 
-  void onRegistration() {}
+  onSignInWithEmail() async {
+    pp('$mm ...  onSignInWithEmail');
 
-  void onSignIn() async {
+    var res = await Navigator.of(context).push(MaterialPageRoute(
+        builder: (ctx) => const EmailAuthSignin()));
+    pp('$mm ... returned from sign in .... $res');
+    if (res is User) {
+      pp('$mm ... returned from sign in .... $res');
+      pp('$mm ... User is fine to this point');
+
+      onSuccessfulSignIn(res);
+    }
+  }
+
+  onSignInWithPhone() async {
+    pp('$mm ... onSignInWithPhone ....');
+
     var res = await Navigator.of(context).push(MaterialPageRoute(
         builder: (ctx) => PhoneAuthSignin(
             dataApiDog: widget.dataApiDog,
@@ -86,6 +102,14 @@ class KasieIntroState extends State<KasieIntro>
 
       onSuccessfulSignIn(res);
     }
+  }
+
+  onRegister() {
+    pp('$mm ... onRegister ....');
+  }
+
+  void onSignIn() async {
+
   }
 
   void onSuccessfulSignIn(User p1) {
@@ -124,45 +148,7 @@ class KasieIntroState extends State<KasieIntro>
             preferredSize: Size.fromHeight(authed ? 80 : 124),
             child: Column(
               children: [
-                Card(
-                  elevation: 4,
-                  color: Colors.black26,
-                  // shape: getRoundedBorder(radius: 16),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          TextButton(
-                              onPressed: onSignIn,
-                              child: Text(
-                                'Sign In',
-                                style:
-                                    myTextStyleMediumWithColor(context, color),
-                              )),
-                          TextButton(
-                              onPressed: onRegistration,
-                              child: Text(
-                                'Register Organization',
-                                style:
-                                    myTextStyleMediumWithColor(context, color),
-                              )),
-                        ],
-                      ),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.end,
-                      //   children: [
-                      //     LocaleChooser(
-                      //         onSelected: onLanguageSelected,
-                      //         color: color,
-                      //         hint: introStrings == null
-                      //             ? 'Select Language'
-                      //             : introStrings!.hint),
-                      //   ],
-                      // )
-                    ],
-                  ),
-                ),
+                Header(onSignInWithEmail: onSignInWithEmail, onSignInWithPhone: onSignInWithPhone, onRegister: onRegister),
                 const SizedBox(
                   height: 12,
                 ),
@@ -237,4 +223,75 @@ class KasieIntroState extends State<KasieIntro>
       ),
     ));
   }
+
+
 }
+
+class Header extends StatelessWidget {
+  const Header({Key? key, required this.onSignInWithEmail, required this.onSignInWithPhone, required this.onRegister}) : super(key: key);
+
+  final Function onSignInWithEmail, onSignInWithPhone, onRegister;
+  @override
+  Widget build(BuildContext context) {
+    return  Card(
+      shape: getRoundedBorder(radius: 16),
+      elevation: 8,
+      child: DropdownButton<int>(
+        hint: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text('Please select the kind of sign in', style: myTextStyleMedium(context),),
+        ),
+        items: const [
+          DropdownMenuItem(
+              value: 0,
+              child: Row(children: [
+            Icon(Icons.phone),
+            SizedBox(width: 20,),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('Sign in with your phone'),
+            ),
+
+          ],)),
+          DropdownMenuItem(
+              value: 1,
+              child: Row(children: [
+            Icon(Icons.email),
+            SizedBox(width: 20,),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('Sign in with your email address'),
+            ),
+
+          ],)),
+          DropdownMenuItem(
+              value: 2,
+              child: Row(children: [
+            Icon(Icons.edit),
+            SizedBox(width: 20,),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('Register Your Association'),
+            ),
+
+          ],)),
+        ],
+        onChanged: (index) {
+          switch(index) {
+            case 0:
+              onSignInWithPhone();
+              break;
+            case 1:
+              onSignInWithEmail();
+              break;
+            case 2:
+              onRegister();
+              break;
+
+          }
+        },
+      ),
+    );
+  }
+}
+

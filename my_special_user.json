@@ -1,0 +1,19 @@
+{
+  "_partitionKey": null,
+  "_id": "6493511c5d5c1e6cd275ce2b",
+  "userType": "ASSOCIATION_OFFICIAL",
+  "userId": "8UnQARfMOgdpj4BtqtmWRasNSop2",
+  "firstName": "St. Vincent",
+  "lastName": "Peters-Maltbie",
+  "gender": null,
+  "countryId": "7a2328bf-915f-4194-82ae-6c220c046cac",
+  "associationId": "2f3faebd-6159-4b03-9857-9dad6d9a82ac",
+  "associationName": "The Most Awesome Taxi Association",
+  "fcmToken": null,
+  "email": "stvincent@theawesome.com",
+  "cellphone": "+19095550007",
+  "password": "pass123",
+  "countryName": "South Africa",
+  "dateRegistered": null,
+  "name": "St. Vincent Peters-Maltbie"
+}

@@ -28,14 +28,14 @@ class RouteMapViewer extends StatefulWidget {
 }
 
 class RouteMapViewerState extends State<RouteMapViewer> {
-  static const defaultZoom = 10.0;
+  static const defaultZoom = 14.0;
   final Completer<GoogleMapController> _mapController = Completer();
 
   CameraPosition? _myCurrentCameraPosition;
   static const mm = '😡😡😡😡😡😡😡 RouteMapViewer: 💪 ';
   final _key = GlobalKey<ScaffoldState>();
   bool busy = false;
-  bool isHybrid = false;
+  bool isHybrid = true;
   lib.User? _user;
   geo.Position? _currentPosition;
   final Set<Marker> _markers = HashSet();
@@ -67,7 +67,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
   }
 
   _getColor() {
-    switch(widget.route.color) {
+    switch (widget.route.color) {
       case 'white':
         return Colors.white;
       case 'black':
@@ -95,7 +95,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
 
   Future _getRouteLandmarks() async {
     routeLandmarks =
-    await listApiDog.getRouteLandmarks(widget.route.routeId!, true);
+        await listApiDog.getRouteLandmarks(widget.route.routeId!, true);
     pp('$mm _getRouteLandmarks ...  route: ${widget.route.name}; found: ${routeLandmarks.length} ');
 
     landmarkIndex = 0;
@@ -121,6 +121,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
     }
     setState(() {});
   }
+
   Future _getRoutePoints(bool refresh) async {
     setState(() {
       busy = true;
@@ -134,6 +135,18 @@ class RouteMapViewerState extends State<RouteMapViewer> {
       pp('$mm .......... existingRoutePoints ....  🍎 found: '
           '${existingRoutePoints.length} points');
       _addPolyLine();
+      setState(() {
+
+      });
+      var point = existingRoutePoints.first;
+      var latLng = LatLng(point.position!.coordinates.last, point.position!.coordinates.first);
+      _myCurrentCameraPosition = CameraPosition(
+        target: latLng,
+        zoom: defaultZoom,
+      );
+      final GoogleMapController controller = await _mapController.future;
+      controller.animateCamera(CameraUpdate.newCameraPosition(_myCurrentCameraPosition!));
+
     } catch (e) {
       pp(e);
     }
@@ -182,12 +195,11 @@ class RouteMapViewerState extends State<RouteMapViewer> {
   Future _buildLandmarkIcons() async {
     for (var i = 0; i < 100; i++) {
       var intList =
-      await getBytesFromAsset("assets/numbers/number_${i + 1}.png", 84);
+          await getBytesFromAsset("assets/numbers/number_${i + 1}.png", 84);
       numberMarkers.add(BitmapDescriptor.fromBytes(intList));
     }
     pp('$mm have built ${numberMarkers.length} markers for landmarks');
   }
-
 
   _clearMap() {
     _polyLines.clear();
@@ -197,7 +209,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
   void _addPolyLine() {
     pp('$mm .......... _addPolyLine ....... .');
     var mPoints = <LatLng>[];
-    existingRoutePoints.sort((a,b) => a.index!.compareTo(b.index!));
+    existingRoutePoints.sort((a, b) => a.index!.compareTo(b.index!));
     for (var rp in existingRoutePoints) {
       mPoints.add(LatLng(
           rp.position!.coordinates.last, rp.position!.coordinates.first));
@@ -205,13 +217,12 @@ class RouteMapViewerState extends State<RouteMapViewer> {
     _clearMap();
     var polyLine = Polyline(
         color: color,
-        width: 12,
+        width: 8,
         points: mPoints,
         polylineId: PolylineId(DateTime.now().toIso8601String()));
 
     _polyLines.add(polyLine);
-    setState(() {
-    });
+    setState(() {});
   }
 
   @override
@@ -241,7 +252,6 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                     _zoomToStartCity();
                     await _getRoutePoints(false);
                     _getRouteLandmarks();
-
                   },
                 ),
                 Positioned(
@@ -275,25 +285,42 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                           elevation: 24,
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.arrow_back_ios,
-                                  size: 24,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(
-                                  width: 8,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    '${widget.route.name}',
-                                    style: myTextStyleSmallWithColor(
+                            child: SizedBox(
+                              height: 100,
+                              child: Column(
+                                children: [
+                                  const SizedBox(
+                                    height: 4,
+                                  ),
+                                  Text(
+                                    'Route Viewer',
+                                    style: myTextStyleMediumLargeWithColor(
                                         context, Colors.white),
                                   ),
-                                )
-                              ],
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.arrow_back_ios,
+                                        size: 24,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(
+                                        width: 8,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text(
+                                          '${widget.route.name}',
+                                          style: myTextStyleMediumWithColor(
+                                              context, Colors.white),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text('${widget.route.associationName}', style: myTextStyleTiny(context),)
+
+                                ],
+                              ),
                             ),
                           ),
                         ))),
@@ -318,8 +345,9 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                     )),
                 busy
                     ? const Positioned(
-                      top: 160, left: 48,
-                      child: Center(
+                        top: 160,
+                        left: 48,
+                        child: Center(
                           child: SizedBox(
                             height: 24,
                             width: 24,
@@ -329,7 +357,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                             ),
                           ),
                         ),
-                    )
+                      )
                     : const SizedBox(),
               ]));
   }

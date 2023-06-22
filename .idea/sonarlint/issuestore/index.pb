@@ -29,8 +29,6 @@ B
 assets/intl_en.arb,9/1/9119b1dcb10f1597aedefbf6d7588e2cc0924485
 M
 lib/intro/intro_page_one.dart,4/6/464c2440c935f8ad7fe225cee4b37dbc68b30b09
-J
-lib/intro/kasie_intro.dart,8/2/82f248876dbd4c1eae928a0af1a06ab11db3b739
 G
 assets/files/people.csv,0/0/00d79e0e826397b2e114a1189d6848b9dda3fd65
 H
@@ -53,10 +51,6 @@ C
 assets/l10n/zh.json,b/b/bbbd2362079a12e2e76383bfa212b9f2fa37ddfc
 C
 assets/l10n/zu.json,4/5/4596336cde542d8cb41696b323907b3743cd3e14
-Q
-!.idea/libraries/Dart_Packages.xml,f/c/fc67c2d2441e33af1dbd1e910281523d1ce74b4a
-S
-#.idea/libraries/Flutter_Plugins.xml,e/8/e8bbc0fdfcefee9aa7b463c83a8a480b92333860
 _
 /android/kasie_transie_route_builder_android.iml,2/a/2a109eddfdc2e0678ea2e8f0f57d6ea2962cced9
 U
@@ -85,8 +79,6 @@ X
 (android/app/src/main/AndroidManifest.xml,e/f/ef79bfd51db69a15dbf5807c05bb249bdccb0556
 [
 +android/app/src/profile/AndroidManifest.xml,d/2/d2c744cc316dff823a081098f4a97f18cd817497
-L
-ios/Runner/AppDelegate.swift,8/4/84700e47abd691450c7da01b0aa772b1d41e4838
 N
 macos/Runner/AppDelegate.swift,e/4/e4af6d2ff916ed239a94327f37e5d2799d045b84
 R
@@ -139,20 +131,10 @@ Q
 !windows/runner/flutter_window.cpp,b/4/b47b503cad16cf9e4d85526bfd797a0af060da95
 O
 windows/runner/flutter_window.h,f/b/fbb3daae00ac99961c4bd53fbc19730e9ea2ec97
-\
-,linux/flutter/generated_plugin_registrant.cc,8/2/82aa08567025817252f7150da6951611f932fce3
-^
-.windows/flutter/generated_plugin_registrant.cc,a/4/a460a0a443b57f23ba67cbcc77064889847c76a7
 [
 +linux/flutter/generated_plugin_registrant.h,d/9/d95a1fc8fea41fc6cc122196d542db7f4130fb92
 ]
 -windows/flutter/generated_plugin_registrant.h,c/4/c4f32636ccc6ab3d0e1279d8d53341e15d62642b
-U
-%linux/flutter/generated_plugins.cmake,e/a/ea61ff9ff38cb6431283c0e1c4f383234ad068aa
-W
-'windows/flutter/generated_plugins.cmake,8/8/88ca6865187a33a9504c7309c5e20c833b7b0094
-]
--macos/Flutter/GeneratedPluginRegistrant.swift,0/2/021794e7deab8f440a40813c70fb58a0cddd4d00
 P
  android/app/google-services.json,e/e/ee748fb75df5665a631a74614646f499f3cea78f
 S
@@ -173,8 +155,6 @@ n
 >macos/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist,f/0/f0fba35a1dc47e61fa539dd6c0357fc0afb69aea
 >
 web/index.html,4/9/49767019a2fee22a613912508aa2789b74108680
-E
-ios/Runner/Info.plist,7/0/7076b60f5e64ebfddc934ae3c4a7a7b87e461a6f
 G
 macos/Runner/Info.plist,6/a/6aa84570038895fdfc615cade318abb9ce846e7b
 g
@@ -199,14 +179,8 @@ A
 web/manifest.json,0/3/035d93726e1f8a624dc6ebe37b7c38b7e6eb2f63
 F
 linux/my_application.h,a/5/a56e4501a358577d0ee3aebac03b481b676cfc32
-;
-ios/Podfile,5/1/510807778b56990ed3829592aea48d7a35b42809
 =
 macos/Podfile,6/4/64d67c25b6ef192830bfd3132cbb847fff8cb5b9
-@
-ios/Podfile.lock,6/f/6fc5efc9eba1a38c53e9a557a6ebda2b662185e1
-T
-$ios/Runner.xcodeproj/project.pbxproj,1/c/1cac92320f17044ec005b6a831fa994f54fba1bc
 V
 &macos/Runner.xcodeproj/project.pbxproj,3/1/31740756e7b30b7d19cf1933c368ae7438ea33ef
 i
@@ -257,7 +231,5 @@ p
 @ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings,e/e/ee07b9792b3a42aff7f72cdd193871e00fdd9be4
 G
 linux/my_application.cc,9/9/995c5ee66ec6a6d46ba2668734a5503c7d0cdf32
-<
-pubspec.yaml,e/8/e8e045469170189f1d6ef12576bd01af132b1018
 Q
 !lib/ui/maps/route_map_editor.dart,d/c/dc6e28c2fcc86545694b989bc9281fb438ace395

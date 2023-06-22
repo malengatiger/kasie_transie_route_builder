@@ -50,17 +50,77 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   // List<lib.Landmark> _landmarks = [];
   List<lib.RoutePoint> existingRoutePoints = [];
   List<poly.PointLatLng>? polylinePoints;
+  final numberMarkers = <BitmapDescriptor>[];
 
   int index = 0;
   bool sending = false;
   Timer? timer;
   int totalPoints = 0;
+  var routeLandmarks = <lib.RouteLandmark>[];
+  var landmarkIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _makeDotMarker();
     _getUser();
+  }
+
+  void _controlReads(bool refresh) async {
+    setState(() {
+      busy = true;
+    });
+    try {
+      await _buildLandmarkIcons();
+      await _getRouteLandmarks();
+      await _getRoutePoints(refresh);
+
+    } catch (e) {
+      pp(e);
+    }
+    setState(() {
+      busy = false;
+    });
+  }
+
+  Future _getRouteLandmarks() async {
+    routeLandmarks =
+    await listApiDog.getRouteLandmarks(widget.route.routeId!, true);
+    pp('\n\n$mm _getRouteLandmarks ...  ${E.appleRed} route: ${widget.route.name}; found: ${routeLandmarks.length} ');
+    routeLandmarks.sort((a,b) => a.created!.compareTo(b.created!));
+    landmarkIndex = 0;
+    for (var landmark in routeLandmarks) {
+      final latLng = LatLng(landmark.position!.coordinates.last,
+          landmark.position!.coordinates.first);
+      _markers.add(Marker(
+          markerId: MarkerId('${landmark.landmarkId}'),
+          icon: numberMarkers.elementAt(landmarkIndex),
+          onTap: () {
+            pp('$mm .............. marker tapped: $index');
+            //_deleteRoutePoint(routePoint);
+          },
+          infoWindow: InfoWindow(
+              snippet: 'This landmark is part of the route.',
+              title: '🔵 ${landmark.landmarkName}',
+              onTap: () {
+                pp('$mm ............. infoWindow tapped, point index: $index');
+                //_deleteLandmark(landmark);
+              }),
+          position: latLng));
+      landmarkIndex++;
+      pp('$mm ... routeLandmark added to markers: ${_markers.length}');
+    }
+    setState(() {});
+
+  }
+
+  Future _buildLandmarkIcons() async {
+    for (var i = 0; i < 120; i++) {
+      var intList =
+      await getBytesFromAsset("assets/numbers/number_${i + 1}.png", 84);
+      numberMarkers.add(BitmapDescriptor.fromBytes(intList));
+    }
+    pp('$mm have built ${numberMarkers.length} markers for landmarks');
   }
 
   Future _getRoutePoints(bool refresh) async {
@@ -84,7 +144,6 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   }
 
   Future<void> _buildExistingMarkers() async {
-    _clearMap();
     setState(() {
       busy = true;
     });
@@ -148,7 +207,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   }
 
   Future _makeDotMarker() async {
-    var intList = await getBytesFromAsset("assets/markers/dot2.png", 40);
+    var intList = await getBytesFromAsset("assets/markers/dot2.png", 32);
     _dotMarker = BitmapDescriptor.fromBytes(intList);
     pp('$mm custom marker 💜 assets/markers/dot2.png created');
   }
@@ -188,7 +247,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
             longitude: latLng.longitude,
             toLatitude: mLat,
             toLongitude: mLng);
-        if (dist > 25) {
+        if (dist > 50) {
           pp('$mm ... this is probably a rogue routePoint: ${E.redDot} '
               '${E.redDot}${E.redDot} distance from previous point: $dist metres');
           return false;
@@ -321,7 +380,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
             onMapCreated: (GoogleMapController controller) {
               _mapController.complete(controller);
               _zoomToStartCity();
-              _getRoutePoints(false);
+              _controlReads(false);
             },
           ),
           Positioned(
@@ -351,29 +410,41 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
                     Navigator.pop(context);
                   },
                   child: Card(
-                    color: Colors.black26,
+                    color: Colors.black38,
+                    shape: getRoundedBorder(radius: 16),
                     elevation: 24,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.arrow_back_ios,
-                            size: 24,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(
-                            width: 8,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              '${widget.route.name}',
-                              style: myTextStyleSmallWithColor(
-                                  context, Colors.white),
+                    child: SizedBox(height: 108,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 4,),
+                            Text('Route Mapper', style: myTextStyleMediumLarge(context),),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.arrow_back_ios,
+                                  size: 24,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(
+                                  width: 8,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    '${widget.route.name}',
+                                    style: myTextStyleMediumWithColor(
+                                        context, Colors.white),
+                                  ),
+                                ),
+                              ],
                             ),
-                          )
-                        ],
+                            const SizedBox(height: 4,),
+                            Text('${widget.route.associationName}', style: myTextStyleTiny(context),),
+
+                          ],
+                        ),
                       ),
                     ),
                   ))),
@@ -398,7 +469,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
                   children: [
                     IconButton(
                         onPressed: () {
-                          _getRoutePoints(true);
+                          _controlReads(true);
                         },
                         icon: Icon(
                           Icons.refresh,

@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -20,10 +22,54 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app-1-79998394043-ios-2e4c2b3597ddbe8ad6139e</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+    	<dict>
+    		<key>NSAllowsArbitraryLoads</key>
+    		<true/>
+    	</dict>
+    	<key>NSBluetoothAlwaysUsageDescription</key>
+    	<string>The app will need to manage a drone via Bluetooth in order to monitor your projects</string>
+    	<key>NSCameraUsageDescription</key>
+    	<string>The camera is needed to do your work as Monitor</string>
+    	<key>NSHumanReadableCopyright</key>
+    	<string></string>
+    	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    	<string>Your location is requested by your manager or supervisor via notifications in the background</string>
+    	<key>NSLocationAlwaysUsageDescription</key>
+    	<string>Your location is required for you to be able to locate your project</string>
+    	<key>NSLocationWhenInUseUsageDescription</key>
+    	<string>Your location is required for you to be able to find your project</string>
+    	<key>NSMicrophoneUsageDescription</key>
+    	<string>We need to access to the microphone to record audio file</string>
+    	<key>NSMotionUsageDescription</key>
+    	<string>We need to show your activity</string>
+    	<key>NSPhotoLibraryUsageDescription</key>
+    	<string>You need to be able to pick photos from your album</string>
+    	<key>UIApplicationSupportsIndirectInputEvents</key>
+    	<true/>
+
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -43,9 +89,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
 </dict>
 </plist>
