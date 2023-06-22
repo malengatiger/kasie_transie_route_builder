@@ -268,8 +268,8 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                     ? const Positioned(
                         child: Center(
                         child: SizedBox(
-                          height: 24,
-                          width: 24,
+                          height: 32,
+                          width: 32,
                           child: CircularProgressIndicator(
                             strokeWidth: 8,
                             backgroundColor: Colors.amber,

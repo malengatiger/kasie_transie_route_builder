@@ -19,6 +19,8 @@ import 'package:realm/realm.dart';
 import 'package:responsive_builder/responsive_builder.dart' as responsive;
 import 'package:uuid/uuid.dart' as uu;
 
+import 'assoc_routes.dart';
+
 class RouteDetailForm extends ConsumerStatefulWidget {
   const RouteDetailForm(
       {Key? key, this.route, required this.dataApiDog, required this.prefs})
@@ -42,6 +44,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
   lib.Route? route;
   lib.User? user;
   lib.Country? country;
+  List<lib.Route> routes = [];
 
   String colorString = 'black';
   Color color = Colors.white;
@@ -54,7 +57,18 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     _controller = AnimationController(vsync: this);
     super.initState();
     _getUser();
-    _getCities(100.0);
+    _getCities(radiusInKM);
+  }
+
+  void _handleRef() async {
+    final m = ref.watch(routesProvider(AssociationParameter(user!.associationId!, false)));
+    if (m.hasValue) {
+      pp('$mm routesProvider has done it again! ❤️${m.value!.length} routes delivered');
+      routes = m.value!;
+      setState(() {
+
+      });
+    }
   }
 
   void _getUser() async {
@@ -78,6 +92,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     } else {
       pp('$mm ${E.nice} ${E.nice} ${E.nice} ${E.nice} -- nice, check sign in widget!!');
     }
+    _handleRef();
   }
 
   void _getCities(double radius) async {
@@ -91,10 +106,12 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
       pp('... ended location GPS .2..');
 
       _cities = await listApiDog.findCitiesByLocation(LocationFinderParameter(
-              associationId: user!.associationId,
-              latitude: loc.latitude,
-              longitude: loc.longitude, limit: 500,
-              radiusInKM: radius));
+          associationId: user!.associationId,
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          limit: 200,
+          radiusInKM: radius));
+      radiusInKM = radius;
       // _cities.sort((a, b) => a.name!.compareTo(b.name!));
       pp('$mm cities found by location: ${_cities.length} cities within $radius km ....');
     } catch (e) {
@@ -233,6 +250,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
   bool findEndCity = false;
   bool _showTheFuckingSearch = false;
 
+  double radiusInKM = 25;
   @override
   Widget build(BuildContext context) {
     var leftPadding = 64.0;
@@ -240,6 +258,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     if (type == 'phone') {
       leftPadding = 2.0;
     }
+    final width = MediaQuery.of(context).size.width;
     return SafeArea(
         child: Scaffold(
       appBar: AppBar(
@@ -257,24 +276,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
               return Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: busy
-                    ? const Center(
-                        child: SizedBox(
-                          height: 200,
-                          child: Column(
-                            children: [
-                              CircularProgressIndicator(
-                                strokeWidth: 6,
-                                backgroundColor: Colors.pink,
-                              ),
-                              SizedBox(
-                                height: 24,
-                              ),
-                              Text(
-                                  'Searching for cities, towns and places around you ... ')
-                            ],
-                          ),
-                        ),
-                      )
+                    ? const AmBusy()
                     : RouteDetailFormContainer(
                         formKey: _formKey,
                         onRouteStartSearch: findNearestStartCity,
@@ -292,17 +294,68 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
                           });
                         },
                         onRefresh: (radius) {
+                           radiusInKM = radius;
+                          _getCities(radius);
+                        }, radiusInKM: 20,
+                      ),
+              );
+            },
+            tablet: (ctx) {
+              return responsive.OrientationLayoutBuilder(portrait: (ctx) {
+                return Row(
+                  children: [
+                    SizedBox(width: (width / 2) + 48,
+                      child: RouteDetailFormContainer(
+                        formKey: _formKey,
+                        onRouteStartSearch: findNearestStartCity,
+                        onRouteEndSearch: findNearestEndCity,
+                        color: color,
+                        radiusInKM: radiusInKM,
+                        nameController: _nameController,
+                        routeNumberController: _routeNumberController,
+                        nearestEnd: endCity,
+                        nearestStart: startCity,
+                        onSubmit: onSubmitRequested,
+                        onColorSelected: (c, s) {
+                          setState(() {
+                            color = c;
+                            colorString = s;
+                          });
+                        },
+                        onRefresh: (radius) {
+                          radiusInKM = radius;
                           _getCities(radius);
                         },
                       ),
-              );
+                    ),
+                    SizedBox(width: (width / 2) - 48,
+                      child: StreamBuilder<List<lib.Route>>(
+                        stream: listApiDog.routeStream,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            routes = snapshot.data!;
+                          }
+                          return RouteList(
+                            navigateToMapViewer: (route) {},
+                            navigateToLandmarks: (route) {},
+                            navigateToCreatorMap: (route) {},
+                            routes: routes,
+                          );
+                        }
+                      ),
+                    ),
+                  ],
+                );
+              });
             },
           ),
           _showTheFuckingSearch
               ? Positioned(
                   top: 8.0,
                   left: leftPadding,
-                  child: SizedBox(width: 600, height: 800,
+                  child: SizedBox(
+                    width: 600,
+                    height: 800,
                     child: CitySearch(
                       title: findStartCity ? 'Start of Route' : 'End of Route',
                       showScaffold: true,
@@ -323,9 +376,49 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
                     ),
                   ))
               : const SizedBox(),
+          busy? const Positioned(
+              top: 240, left: 80,
+              child: AmBusy()): const SizedBox()
         ],
       ),
     ));
+  }
+}
+
+class AmBusy extends StatelessWidget {
+  const AmBusy({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return  Center(
+      child: SizedBox(
+        height: 160,
+        child: Card(
+          color: Colors.black26,
+          shape: getRoundedBorder(radius: 16),
+          elevation: 16,
+          child: const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                SizedBox(height:18,width: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 6,
+                    backgroundColor: Colors.pink,
+                  ),
+                ),
+                SizedBox(
+                  height: 24,
+                ),
+                Text('Searching for cities, towns and places around you ... ')
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -342,7 +435,7 @@ class RouteDetailFormContainer extends StatelessWidget {
       required this.color,
       required this.onSubmit,
       required this.onColorSelected,
-      required this.onRefresh})
+      required this.onRefresh, required this.radiusInKM})
       : super(key: key);
 
   final GlobalKey<FormState> formKey;
@@ -352,6 +445,7 @@ class RouteDetailFormContainer extends StatelessWidget {
   final City? nearestStart, nearestEnd;
   final TextEditingController routeNumberController, nameController;
   final Color color;
+  final double radiusInKM;
   final Function(double) onRefresh;
 
   @override
@@ -375,151 +469,178 @@ class RouteDetailFormContainer extends StatelessWidget {
             ),
             Expanded(
                 child: SingleChildScrollView(
-              child: Form(
-                key: formKey,
-                child: Column(
-                  children: [
-                    const SizedBox(
-                      height: 28,
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        onRouteStartSearch();
-                      },
-                      child: CityWidget(
-                        city: nearestStart,
-                        title: 'Route Start',
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 32,
-                    ),
-                    GestureDetector(
-                        onTap: () {
-                          onRouteEndSearch();
-                        },
-                        child:
-                            CityWidget(city: nearestEnd, title: 'Route End')),
-                    const SizedBox(
-                      height: 28,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        DropdownButton<double>(
-                            hint: const Text('Select Search Radius'),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 10.0,
-                                child: Text('10 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 20.0,
-                                child: Text('20 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 30.0,
-                                child: Text('30 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 40.0,
-                                child: Text('40 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 50.0,
-                                child: Text('50 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 100.0,
-                                child: Text('100 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 150.0,
-                                child: Text('150 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 200.0,
-                                child: Text('200 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 300.0,
-                                child: Text('300 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 500.0,
-                                child: Text('500 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 750.0,
-                                child: Text('750 km'),
-                              ),
-                              DropdownMenuItem(
-                                value: 1000.0,
-                                child: Text('1000 km'),
-                              ),
+              child: Card(
+                shape: getRoundedBorder(radius: 16),
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Form(
+                    key: formKey,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          const SizedBox(
+                            height: 28,
+                          ),
+                          Row(mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text('Tap below to select your start and end of the route',
+                                style: myTextStyleSmall(context),),
                             ],
-                            onChanged: (m) {
-                              if (m != null) {
-                                onRefresh(m);
-                              }
-                            })
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 28,
-                    ),
-                    TextFormField(
-                      controller: nameController,
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter name of the taxi Route';
-                        }
-                        return null;
-                      },
-                      decoration: const InputDecoration(
-                        labelText: 'Route Name',
-                        hintText: 'Enter Route Name',
+                          ),
+                          const SizedBox(
+                            height: 28,
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              onRouteStartSearch();
+                            },
+                            child: CityWidget(
+                              city: nearestStart,
+                              title: 'Route Start',
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 32,
+                          ),
+                          GestureDetector(
+                              onTap: () {
+                                onRouteEndSearch();
+                              },
+                              child:
+                                  CityWidget(city: nearestEnd, title: 'Route End')),
+                          const SizedBox(
+                            height: 28,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              DropdownButton<double>(
+                                  hint: const Text('Select Search Area'),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 10.0,
+                                      child: Text('10 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 20.0,
+                                      child: Text('20 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 30.0,
+                                      child: Text('30 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 40.0,
+                                      child: Text('40 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 50.0,
+                                      child: Text('50 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 100.0,
+                                      child: Text('100 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 150.0,
+                                      child: Text('150 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 200.0,
+                                      child: Text('200 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 300.0,
+                                      child: Text('300 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 500.0,
+                                      child: Text('500 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 750.0,
+                                      child: Text('750 km'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 1000.0,
+                                      child: Text('1000 km'),
+                                    ),
+                                  ],
+                                  onChanged: (m) {
+                                    if (m != null) {
+                                      onRefresh(m);
+                                    }
+                                  }),
+                              const SizedBox(
+                                width: 28,
+                              ),
+                              Text('$radiusInKM km', style: myTextStyleMediumLargeWithSize(
+                                  context, 20)),
+                            ],
+                          ),
+
+                          const SizedBox(
+                            height: 28,
+                          ),
+                          SizedBox(width: 420,
+                            child: TextFormField(
+                              controller: nameController,
+                              validator: (value) {
+                                if (value!.isEmpty) {
+                                  return 'Please enter name of the taxi Route';
+                                }
+                                return null;
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Route Name',
+                                hintText: 'Enter Route Name',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 48,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text('Route Colour'),
+                              const SizedBox(
+                                width: 24,
+                              ),
+                              Container(
+                                height: 24,
+                                width: 24,
+                                color: color,
+                              ),
+                              const SizedBox(
+                                width: 24,
+                              ),
+                              ColorPicker(onColorPicked: (string, clr) {
+                                onColorSelected(clr, string);
+                              }),
+                            ],
+                          ),
+                          const SizedBox(
+                            height: 100,
+                          ),
+                          ElevatedButton(
+                              onPressed: () {
+                                onSubmit();
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 40.0, vertical: 20),
+                                child: Text('Save Route'),
+                              )),
+                          const SizedBox(
+                            height: 120,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(
-                      height: 48,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('Route Colour'),
-                        const SizedBox(
-                          width: 24,
-                        ),
-                        Container(
-                          height: 24,
-                          width: 24,
-                          color: color,
-                        ),
-                        const SizedBox(
-                          width: 24,
-                        ),
-                        ColorPicker(onColorPicked: (string, clr) {
-                          onColorSelected(clr, string);
-                        }),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 100,
-                    ),
-                    ElevatedButton(
-                        onPressed: () {
-                          onSubmit();
-                        },
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 40.0, vertical: 20),
-                          child: Text('Save Route'),
-                        )),
-                    const SizedBox(
-                      height: 120,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             )),
@@ -691,22 +812,21 @@ class CityWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      child: Row(
-        children: [
-          SizedBox(width: 80, child: Text(title)),
-          const SizedBox(
-            width: 12,
-          ),
-          city == null
-              ? const SizedBox()
-              : Text(
-                  '${city!.name}',
-                  style: myTextStyleMediumBoldWithColor(
-                      context, Theme.of(context).primaryColor),
-                )
-        ],
-      ),
+    return Row(
+      children: [
+        SizedBox(width: 120, child: Text(title, style:
+        myTextStyleMediumLargeWithSize(context, 16),)),
+        const SizedBox(
+          width: 12,
+        ),
+        city == null
+            ? const SizedBox()
+            : Text(
+                '${city!.name}',
+                style: myTextStyleMediumBoldWithColor(
+                    context, Theme.of(context).primaryColor),
+              )
+      ],
     );
   }
 }
