@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:kasie_transie_library/auth/phone_auth_signin.dart';
 import 'package:kasie_transie_library/bloc/data_api_dog.dart';
-import 'package:kasie_transie_library/data/schemas.dart';
+import 'package:kasie_transie_library/data/schemas.dart' as lib;
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
@@ -80,7 +80,7 @@ class KasieIntroState extends State<KasieIntro>
     var res = await Navigator.of(context).push(MaterialPageRoute(
         builder: (ctx) => const EmailAuthSignin()));
     pp('$mm ... returned from sign in .... $res');
-    if (res is User) {
+    if (res is lib.User) {
       pp('$mm ... returned from sign in .... $res');
       pp('$mm ... User is fine to this point');
 
@@ -96,7 +96,7 @@ class KasieIntroState extends State<KasieIntro>
             dataApiDog: widget.dataApiDog,
             onSuccessfulSignIn: onSuccessfulSignIn)));
     pp('$mm ... returned from sign in .... $res');
-    if (res is User) {
+    if (res is lib.User) {
       pp('$mm ... returned from sign in .... $res');
       pp('$mm ... User is fine to this point');
 
@@ -112,7 +112,7 @@ class KasieIntroState extends State<KasieIntro>
 
   }
 
-  void onSuccessfulSignIn(User p1) {
+  void onSuccessfulSignIn(lib.User p1) {
     pp('$mm ... onSuccessfulSignIn .... ${p1.name}');
     Navigator.of(context).pop(p1);
     navigateWithScale(

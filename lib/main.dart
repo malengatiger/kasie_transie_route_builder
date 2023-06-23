@@ -82,7 +82,7 @@ class KasieTransieApp extends ConsumerWidget {
                 animationDuration: const Duration(milliseconds: 2000),
                 curve: Curves.easeInCirc,
                 splashIconSize: 160.0,
-                nextScreen: fbAuthedUser == null
+                nextScreen: me == null
                     ? LandingPage(
                         listApiDog: listApiDog,
                         dataApiDog: dataApiDog,

@@ -75,8 +75,6 @@ E
 analysis_options.yaml,9/5/9573dd68c24611034c89c926cde7e71d100ed7ab
 Y
 )android/app/src/debug/AndroidManifest.xml,e/9/e9b8a57f79617fe2b2612f997e0f60425ebc5097
-X
-(android/app/src/main/AndroidManifest.xml,e/f/ef79bfd51db69a15dbf5807c05bb249bdccb0556
 [
 +android/app/src/profile/AndroidManifest.xml,d/2/d2c744cc316dff823a081098f4a97f18cd817497
 N

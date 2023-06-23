@@ -181,8 +181,6 @@ m
 =macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme,3/1/3148bc763b53b8b8750bb6c9a3d55991c96b1aeb
 €
 Pmacos/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist,4/4/441e866665f1088069379e4627c7797a107aed85
-X
-(android/app/src/main/AndroidManifest.xml,e/f/ef79bfd51db69a15dbf5807c05bb249bdccb0556
 k
 ;android/app/src/main/res/drawable-v21/launch_background.xml,6/6/667a9dec0170bf4f69af91c8b7af74a0433e933a
 `

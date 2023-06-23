@@ -13,6 +13,7 @@ import 'package:kasie_transie_library/utils/emojis.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
+import 'package:kasie_transie_route_builder/ui/maps/city_creator_map.dart';
 import 'package:kasie_transie_route_builder/ui/maps/landmark_creator_map.dart';
 import 'package:kasie_transie_route_builder/ui/route_detail_form.dart';
 import 'package:kasie_transie_route_builder/ui/route_info_widget.dart';
@@ -174,6 +175,12 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                       _refresh();
                     },
                     icon: const Icon(Icons.refresh)),
+                IconButton(
+                    onPressed: () async {
+                      pp('$mm navigate to city creator map .......');
+                      navigateWithFade(const CityCreatorMap(), context);
+                    },
+                    icon: const Icon(Icons.account_balance)),
                 IconButton(
                     onPressed: () {
                       navigateWithScale(
@@ -428,11 +435,7 @@ class RouteList extends StatelessWidget {
                 itemBuilder: (ctx, index) {
                   var elevation = 6.0;
                   final rt = routes.elementAt(index);
-                  if (index == indexFound) {
-                    pp('index == indexFound route: $index - finding in list');
 
-                    elevation = 8;
-                  }
 
                   return FocusedMenuHolder(
                     menuOffset: 24,
