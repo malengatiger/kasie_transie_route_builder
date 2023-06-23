@@ -17,6 +17,7 @@ import 'package:kasie_transie_route_builder/ui/maps/city_creator_map.dart';
 import 'package:kasie_transie_route_builder/ui/maps/landmark_creator_map.dart';
 import 'package:kasie_transie_route_builder/ui/route_detail_form.dart';
 import 'package:kasie_transie_route_builder/ui/route_info_widget.dart';
+import 'package:kasie_transie_route_builder/ui/tiny_bloc.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 
 import 'maps/route_creator_map.dart';
@@ -40,8 +41,11 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   final mm = '🔆🔆🔆🔆🔆 AssociationRoutes 🔵🔵 ';
   bool busy = false;
   var routes = <lib.Route>[];
-  lib.User? user;
   late StreamSubscription<List<lib.Route>> _sub;
+  lib.User? user;
+  final StreamController<String> _streamController =
+      StreamController.broadcast();
+  Stream<String> get routeIdStream => _streamController.stream;
 
   @override
   void initState() {
@@ -66,6 +70,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     });
     try {
       user = await prefs.getUser();
+      _refresh(false);
     } catch (e) {
       pp(e);
     }
@@ -77,10 +82,14 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   lib.Route? selectedRoute;
 
   void navigateToLandmarks(lib.Route route) async {
-    pp('$mm navigateToLandmarksEditor .....  ');
+    pp('$mm navigateToLandmarksEditor .....  route: ${route.name}');
+    tinyBloc.setRoute(route);
+
     setState(() {
       selectedRoute = route;
     });
+    pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
+
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
       navigateWithScale(
@@ -92,10 +101,14 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   }
 
   void navigateToMapViewer(lib.Route route) async {
-    pp('$mm navigateToMapViewer .....  ');
+    pp('$mm navigateToMapViewer .....  route: ${route.name}');
+    tinyBloc.setRoute(route);
+
     setState(() {
       selectedRoute = route;
     });
+    pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
+
     await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
@@ -108,10 +121,13 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   }
 
   void navigateToCreatorMap(lib.Route route) async {
-    pp('$mm navigateToCreatorMap .....  ');
+    pp('$mm navigateToCreatorMap .....  route: ${route.name}');
+    tinyBloc.setRoute(route);
     setState(() {
       selectedRoute = route;
     });
+    pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
+
     await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
@@ -123,12 +139,12 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     }
   }
 
-  void _refresh() async {
+  void _refresh(bool refresh) async {
     setState(() {
       busy = true;
     });
     await listApiDog
-        .getRoutes(AssociationParameter(user!.associationId!, true));
+        .getRoutes(AssociationParameter(user!.associationId!, refresh));
     setState(() {
       busy = false;
     });
@@ -172,7 +188,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                     onPressed: () async {
                       pp('$mm refresh routes from backend .......');
                       selectedRoute = null;
-                      _refresh();
+                      _refresh(true);
                     },
                     icon: const Icon(Icons.refresh)),
                 IconButton(
@@ -235,7 +251,9 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                         SizedBox(
                                           width: (width / 2),
                                           child: RouteInfoWidget(
-                                            route: selectedRoute,
+                                            routeId: selectedRoute == null
+                                                ? null
+                                                : selectedRoute!.routeId,
                                           ),
                                         ),
                                       ],
@@ -261,7 +279,9 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                         SizedBox(
                                           width: (width / 2),
                                           child: RouteInfoWidget(
-                                            route: selectedRoute,
+                                            routeId: selectedRoute == null
+                                                ? null
+                                                : selectedRoute!.routeId,
                                           ),
                                         ),
                                       ],
@@ -402,24 +422,6 @@ class RouteList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int indexFound = 0;
-    bool found = false;
-    try {
-      if (currentRoute != null) {
-        pp('current route: ${currentRoute!.name} - finding in list');
-        for (var route in routes) {
-          if (route.routeId == currentRoute!.routeId!) {
-            found = true;
-            break;
-          }
-          indexFound++;
-        }
-        pp('current route found: $indexFound- found: $found');
-      }
-    } catch (e) {
-      pp(e);
-    }
-
     return Padding(
       padding: const EdgeInsets.all(6.0),
       child: Card(
@@ -435,7 +437,6 @@ class RouteList extends StatelessWidget {
                 itemBuilder: (ctx, index) {
                   var elevation = 6.0;
                   final rt = routes.elementAt(index);
-
 
                   return FocusedMenuHolder(
                     menuOffset: 24,
