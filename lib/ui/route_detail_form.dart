@@ -51,7 +51,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
   List<lib.Route> routes = [];
 
   String colorString = 'black';
-  Color color = Colors.white;
+  Color color = Colors.black;
   SettingsModel? settingsModel;
   bool busy = false;
   var _cities = <City>[];
@@ -112,7 +112,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
           associationId: user!.associationId,
           latitude: loc.latitude,
           longitude: loc.longitude,
-          limit: 200,
+          limit: 500,
           radiusInKM: radius));
       radiusInKM = radius;
       // _cities.sort((a, b) => a.name!.compareTo(b.name!));
@@ -238,7 +238,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     try {
       final m = await dataApiDog.addRoute(route);
       if (mounted) {
-        navigateWithScale(RouteCreatorMap(route: m), context);
+        _showDialog(m);
       }
     } catch (e) {
       pp(e);
@@ -247,6 +247,42 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
           message: 'Route failed: $e',
           context: context);
     }
+  }
+
+  void _showDialog(lib.Route route) {
+    showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title:  Text('Next Step?', style: myTextStyleLarge(context),),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('No'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: const Text('Yes'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    navigateWithScale(RouteCreatorMap(route: route), context);
+                  },
+                )
+              ],
+              content: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Do you want to start mapping the route?'),
+                      ),
+                    ],
+                  )));
+        });
   }
 
   bool findStartCity = false;

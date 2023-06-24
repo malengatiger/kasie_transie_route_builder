@@ -87,15 +87,16 @@ class RouteListMinimumState extends State<RouteListMinimum>
                   height: 24,
                 ),
                 Text(
-                    user == null ? 'Association Name' : user!.associationName!),
+                    user == null ? 'Association Name' : user!.associationName!,
+                style: myTextStyleMediumPrimaryColor(context),),
                 const SizedBox(
                   height: 24,
                 ),
                 Expanded(
                     child: bd.Badge(
                       position: bd.BadgePosition.topEnd(end: 12),
-                      badgeStyle: const bd.BadgeStyle(padding: EdgeInsets.all(12),
-
+                      badgeStyle:  bd.BadgeStyle(padding: const EdgeInsets.all(12),
+                      badgeColor: Theme.of(context).primaryColor,
                       ),
                       badgeContent: Text('${routes.length}'),
                       child: ListView.builder(
@@ -104,10 +105,10 @@ class RouteListMinimumState extends State<RouteListMinimum>
                             final r = routes.elementAt(index);
                             return Card(
                               shape: getRoundedBorder(radius: 16),
-                              elevation: 2,
+                              elevation: 6,
                               child: Padding(
                                 padding: const EdgeInsets.all(16.0),
-                                child: Text('${r.name}'),
+                                child: Text('${r.name}', style: myTextStyleSmall(context),),
                               ),
                             );
                           }),

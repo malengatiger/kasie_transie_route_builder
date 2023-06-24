@@ -171,7 +171,7 @@ class RouteDetailFormContainer extends StatelessWidget {
                                   bd.Badge(
                                       badgeContent: Text('$numberOfCities'),
                                       badgeStyle: const bd.BadgeStyle(
-                                        elevation: 4, badgeColor: Colors.teal,
+                                        elevation: 8, badgeColor: Colors.teal,
                                         padding: EdgeInsets.all(16.0),
                                       )
                                   ),
@@ -206,10 +206,17 @@ class RouteDetailFormContainer extends StatelessWidget {
                                   const SizedBox(
                                     width: 24,
                                   ),
-                                  Container(
-                                    height: 24,
-                                    width: 24,
-                                    color: color,
+                                  Card(
+                                    shape: getRoundedBorder(radius: 8),
+                                    elevation: 12,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Container(
+                                        height: 24,
+                                        width: 24,
+                                        color: color,
+                                      ),
+                                    ),
                                   ),
                                   const SizedBox(
                                     width: 24,
