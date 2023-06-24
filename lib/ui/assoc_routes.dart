@@ -56,7 +56,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
 
   void _listen() {
     _sub = listApiDog.routeStream.listen((routesFromStream) {
-      pp('$mm listApiDog.routeStream delivered: ${routesFromStream.length}');
+      pp('$mm ... listApiDog.routeStream delivered: ${routesFromStream.length}');
       routes = routesFromStream;
       if (mounted) {
         setState(() {});
@@ -70,7 +70,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     });
     try {
       user = await prefs.getUser();
-      _refresh(false);
+      _refresh(true);
     } catch (e) {
       pp(e);
     }
@@ -80,13 +80,15 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   }
 
   lib.Route? selectedRoute;
+  String? selectedRouteId;
 
   void navigateToLandmarks(lib.Route route) async {
     pp('$mm navigateToLandmarksEditor .....  route: ${route.name}');
-    tinyBloc.setRoute(route);
+    tinyBloc.setRouteId(route.routeId!);
 
     setState(() {
       selectedRoute = route;
+      selectedRouteId = route.routeId;
     });
     pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
 
@@ -102,19 +104,25 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
 
   void navigateToMapViewer(lib.Route route) async {
     pp('$mm navigateToMapViewer .....  route: ${route.name}');
-    tinyBloc.setRoute(route);
+    tinyBloc.setRouteId(route.routeId!);
 
     setState(() {
       selectedRoute = route;
+      selectedRouteId = route.routeId;
+
     });
     pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
 
     await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
+      //route = await listApiDog.
       navigateWithScale(
           RouteMapViewer(
-            route: route,
+            route: route, onRouteUpdated: (){
+              pp('\n\n$mm onRouteUpdated ... do something Boss!');
+              _refresh(true);
+          },
           ),
           context);
     }
@@ -122,9 +130,11 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
 
   void navigateToCreatorMap(lib.Route route) async {
     pp('$mm navigateToCreatorMap .....  route: ${route.name}');
-    tinyBloc.setRoute(route);
+    tinyBloc.setRouteId(route.routeId!);
     setState(() {
       selectedRoute = route;
+      selectedRouteId = route.routeId;
+
     });
     pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
 
@@ -251,9 +261,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                         SizedBox(
                                           width: (width / 2),
                                           child: RouteInfoWidget(
-                                            routeId: selectedRoute == null
-                                                ? null
-                                                : selectedRoute!.routeId,
+                                            routeId: selectedRouteId,
                                           ),
                                         ),
                                       ],
@@ -279,9 +287,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                         SizedBox(
                                           width: (width / 2),
                                           child: RouteInfoWidget(
-                                            routeId: selectedRoute == null
-                                                ? null
-                                                : selectedRoute!.routeId,
+                                            routeId: selectedRouteId,
                                           ),
                                         ),
                                       ],

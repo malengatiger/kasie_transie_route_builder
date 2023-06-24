@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
 import 'package:intl/intl.dart';
+import 'package:kasie_transie_route_builder/ui/widgets/color_pad.dart';
 import 'package:kasie_transie_route_builder/ui/tiny_bloc.dart';
 
 class RouteInfoWidget extends StatefulWidget {
@@ -19,34 +20,39 @@ class _RouteInfoWidgetState extends State<RouteInfoWidget> {
   final mm = '😎😎😎😎😎😎😎😎 RouteInfoWidget: 🍎🍎🍎';
   var numberOfPoints = 0;
   var numberOfLandmarks = 0;
-  late StreamSubscription<lib.Route> sub;
+  late StreamSubscription<String> sub;
 
   @override
   void initState() {
     super.initState();
     pp('$mm initState ................... ');
     listen();
+    _getData(widget.routeId);
   }
 
   void listen() {
     pp('$mm listen to routeStream .............');
+    sub = tinyBloc.routeIdStream.listen((routeId) async {
+      pp('$mm routeStream delivered routeId: $routeId ');
+      await _getData(routeId);
 
-    sub = tinyBloc.routeStream.listen((event) async {
-      pp('$mm routeStream delivered route: ${event.name} ');
       if (mounted) {
-        route = event;
         setState(() {});
-        _getData(route!.routeId!);
       }
     });
   }
 
-  Future _getData(String routeId) async {
-    pp('$mm _getData ..... numberOfLandmarks, numberOfPoints ');
+  Future _getData(String? routeId) async {
+    pp('$mm _getData ..... numberOfLandmarks, '
+        'numberOfPoints; routeId: $routeId ');
 
-    numberOfLandmarks = await tinyBloc.getNumberOfLandmarks(routeId);
-    numberOfPoints = await tinyBloc.getNumberOfPoints(routeId);
-    setState(() {});
+    if (routeId != null) {
+      numberOfLandmarks = await tinyBloc.getNumberOfLandmarks(routeId);
+      numberOfPoints = await tinyBloc.getNumberOfPoints(routeId);
+      route = await tinyBloc.getRoute(routeId);
+
+      setState(() {});
+    }
   }
 
   @override
@@ -72,7 +78,15 @@ class _RouteInfoWidgetState extends State<RouteInfoWidget> {
       );
     }
 
+    if (route!.isValid) {
     pp('$mm build. route is valid: ${route!.name} .....  ');
+    } else {
+      pp('$mm build. route is INVALID ...... getting route from cache ... ');
+      route = tinyBloc.getRouteFromCache(widget.routeId!);
+      // return  Center(
+      //   child: Text('Still waiting: ${route!.name!}'));
+
+    }
 
     return Card(
       shape: getRoundedBorder(radius: 16),
@@ -113,6 +127,14 @@ class _RouteInfoWidgetState extends State<RouteInfoWidget> {
           ),
           const SizedBox(
             height: 48,
+          ),
+          Text('Route Color', style: myTextStyleSmall(context),),
+          const SizedBox(
+            height: 8,
+          ),
+          Container(width: 200, height: 28, color: getColor(route!.color!),),
+          const SizedBox(
+            height: 24,
           ),
           SizedBox(
               height: 80,

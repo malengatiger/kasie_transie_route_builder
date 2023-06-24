@@ -15,11 +15,15 @@ import 'package:kasie_transie_library/utils/parsers.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_library/widgets/city_selection.dart';
 import 'package:kasie_transie_route_builder/ui/maps/route_creator_map.dart';
+import 'package:kasie_transie_route_builder/ui/route_detail_form_container.dart';
+import 'package:kasie_transie_route_builder/ui/widgets/route_list_minimum.dart';
+import 'package:kasie_transie_route_builder/ui/widgets/searching_cities_busy.dart';
 import 'package:realm/realm.dart';
 import 'package:responsive_builder/responsive_builder.dart' as responsive;
 import 'package:uuid/uuid.dart' as uu;
 
 import 'assoc_routes.dart';
+import 'widgets/color_picker.dart';
 
 class RouteDetailForm extends ConsumerStatefulWidget {
   const RouteDetailForm(
@@ -57,17 +61,16 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     _controller = AnimationController(vsync: this);
     super.initState();
     _getUser();
-    _getCities(radiusInKM);
+    findCitiesByLocation(radiusInKM);
   }
 
   void _handleRef() async {
-    final m = ref.watch(routesProvider(AssociationParameter(user!.associationId!, false)));
+    final m = ref.watch(
+        routesProvider(AssociationParameter(user!.associationId!, false)));
     if (m.hasValue) {
       pp('$mm routesProvider has done it again! ❤️${m.value!.length} routes delivered');
       routes = m.value!;
-      setState(() {
-
-      });
+      setState(() {});
     }
   }
 
@@ -95,7 +98,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     _handleRef();
   }
 
-  void _getCities(double radius) async {
+  void findCitiesByLocation(double radius) async {
     setState(() {
       busy = true;
     });
@@ -276,7 +279,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
               return Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: busy
-                    ? const AmBusy()
+                    ? const SearchingCitiesBusy()
                     : RouteDetailFormContainer(
                         formKey: _formKey,
                         onRouteStartSearch: findNearestStartCity,
@@ -294,9 +297,11 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
                           });
                         },
                         onRefresh: (radius) {
-                           radiusInKM = radius;
-                          _getCities(radius);
-                        }, radiusInKM: 20,
+                          radiusInKM = radius;
+                          findCitiesByLocation(radius);
+                        },
+                        radiusInKM: 20,
+                        numberOfCities: _cities.length,
                       ),
               );
             },
@@ -304,9 +309,11 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
               return responsive.OrientationLayoutBuilder(portrait: (ctx) {
                 return Row(
                   children: [
-                    SizedBox(width: (width / 2) + 48,
+                    SizedBox(
+                      width: (width / 2) + 48,
                       child: RouteDetailFormContainer(
                         formKey: _formKey,
+                        numberOfCities: _cities.length,
                         onRouteStartSearch: findNearestStartCity,
                         onRouteEndSearch: findNearestEndCity,
                         color: color,
@@ -324,25 +331,20 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
                         },
                         onRefresh: (radius) {
                           radiusInKM = radius;
-                          _getCities(radius);
+                          findCitiesByLocation(radius);
                         },
                       ),
                     ),
-                    SizedBox(width: (width / 2) - 48,
+                    SizedBox(
+                      width: (width / 2) - 48,
                       child: StreamBuilder<List<lib.Route>>(
-                        stream: listApiDog.routeStream,
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            routes = snapshot.data!;
-                          }
-                          return RouteList(
-                            navigateToMapViewer: (route) {},
-                            navigateToLandmarks: (route) {},
-                            navigateToCreatorMap: (route) {},
-                            routes: routes,
-                          );
-                        }
-                      ),
+                          stream: listApiDog.routeStream,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              routes = snapshot.data!;
+                            }
+                            return const RouteListMinimum();
+                          }),
                     ),
                   ],
                 );
@@ -376,457 +378,12 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
                     ),
                   ))
               : const SizedBox(),
-          busy? const Positioned(
-              top: 240, left: 80,
-              child: AmBusy()): const SizedBox()
+          busy
+              ? const Positioned(
+                  top: 240, left: 80, child: SearchingCitiesBusy())
+              : const SizedBox()
         ],
       ),
     ));
-  }
-}
-
-class AmBusy extends StatelessWidget {
-  const AmBusy({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return  Center(
-      child: SizedBox(
-        height: 160,
-        child: Card(
-          color: Colors.black26,
-          shape: getRoundedBorder(radius: 16),
-          elevation: 16,
-          child: const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                SizedBox(height:18,width: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 6,
-                    backgroundColor: Colors.pink,
-                  ),
-                ),
-                SizedBox(
-                  height: 24,
-                ),
-                Text('Searching for cities, towns and places around you ... ')
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class RouteDetailFormContainer extends StatelessWidget {
-  const RouteDetailFormContainer(
-      {Key? key,
-      required this.formKey,
-      required this.onRouteStartSearch,
-      required this.onRouteEndSearch,
-      required this.nearestStart,
-      required this.nearestEnd,
-      required this.routeNumberController,
-      required this.nameController,
-      required this.color,
-      required this.onSubmit,
-      required this.onColorSelected,
-      required this.onRefresh, required this.radiusInKM})
-      : super(key: key);
-
-  final GlobalKey<FormState> formKey;
-  final Function onRouteStartSearch;
-  final Function onRouteEndSearch, onSubmit;
-  final Function(Color, String) onColorSelected;
-  final City? nearestStart, nearestEnd;
-  final TextEditingController routeNumberController, nameController;
-  final Color color;
-  final double radiusInKM;
-  final Function(double) onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 8,
-      shape: getRoundedBorder(radius: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 12,
-            ),
-            Text(
-              'Create or update the taxi Route',
-              style: myTextStyleMedium(context),
-            ),
-            const SizedBox(
-              height: 48,
-            ),
-            Expanded(
-                child: SingleChildScrollView(
-              child: Card(
-                shape: getRoundedBorder(radius: 16),
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Form(
-                    key: formKey,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          const SizedBox(
-                            height: 28,
-                          ),
-                          Row(mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Text('Tap below to select your start and end of the route',
-                                style: myTextStyleSmall(context),),
-                            ],
-                          ),
-                          const SizedBox(
-                            height: 28,
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              onRouteStartSearch();
-                            },
-                            child: CityWidget(
-                              city: nearestStart,
-                              title: 'Route Start',
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 32,
-                          ),
-                          GestureDetector(
-                              onTap: () {
-                                onRouteEndSearch();
-                              },
-                              child:
-                                  CityWidget(city: nearestEnd, title: 'Route End')),
-                          const SizedBox(
-                            height: 28,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              DropdownButton<double>(
-                                  hint: const Text('Select Search Area'),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 10.0,
-                                      child: Text('10 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 20.0,
-                                      child: Text('20 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 30.0,
-                                      child: Text('30 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 40.0,
-                                      child: Text('40 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 50.0,
-                                      child: Text('50 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 100.0,
-                                      child: Text('100 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 150.0,
-                                      child: Text('150 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 200.0,
-                                      child: Text('200 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 300.0,
-                                      child: Text('300 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 500.0,
-                                      child: Text('500 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 750.0,
-                                      child: Text('750 km'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 1000.0,
-                                      child: Text('1000 km'),
-                                    ),
-                                  ],
-                                  onChanged: (m) {
-                                    if (m != null) {
-                                      onRefresh(m);
-                                    }
-                                  }),
-                              const SizedBox(
-                                width: 28,
-                              ),
-                              Text('$radiusInKM km', style: myTextStyleMediumLargeWithSize(
-                                  context, 20)),
-                            ],
-                          ),
-
-                          const SizedBox(
-                            height: 28,
-                          ),
-                          SizedBox(width: 420,
-                            child: TextFormField(
-                              controller: nameController,
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return 'Please enter name of the taxi Route';
-                                }
-                                return null;
-                              },
-                              decoration: const InputDecoration(
-                                labelText: 'Route Name',
-                                hintText: 'Enter Route Name',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 48,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text('Route Colour'),
-                              const SizedBox(
-                                width: 24,
-                              ),
-                              Container(
-                                height: 24,
-                                width: 24,
-                                color: color,
-                              ),
-                              const SizedBox(
-                                width: 24,
-                              ),
-                              ColorPicker(onColorPicked: (string, clr) {
-                                onColorSelected(clr, string);
-                              }),
-                            ],
-                          ),
-                          const SizedBox(
-                            height: 100,
-                          ),
-                          ElevatedButton(
-                              onPressed: () {
-                                onSubmit();
-                              },
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 40.0, vertical: 20),
-                                child: Text('Save Route'),
-                              )),
-                          const SizedBox(
-                            height: 120,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            )),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ColorPicker extends StatelessWidget {
-  const ColorPicker({Key? key, required this.onColorPicked}) : super(key: key);
-  final Function(String, Color) onColorPicked;
-
-  @override
-  Widget build(BuildContext context) {
-    final items = <DropdownMenuItem<int>>[];
-    items.add(DropdownMenuItem<int>(
-      value: 0,
-      child: Container(
-        color: Colors.red,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(DropdownMenuItem<int>(
-      value: 1,
-      child: Container(
-        color: Colors.black,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(DropdownMenuItem<int>(
-      value: 2,
-      child: Container(
-        color: Colors.white,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(DropdownMenuItem<int>(
-      value: 3,
-      child: Container(
-        color: Colors.orange,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(DropdownMenuItem<int>(
-      value: 4,
-      child: Container(
-        color: Colors.green,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(DropdownMenuItem<int>(
-      value: 5,
-      child: Container(
-        color: Colors.indigo,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(DropdownMenuItem<int>(
-      value: 6,
-      child: Container(
-        color: Colors.pink,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(DropdownMenuItem<int>(
-      value: 7,
-      child: Container(
-        color: Colors.amber,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(DropdownMenuItem<int>(
-      value: 8,
-      child: Container(
-        color: Colors.yellow,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(DropdownMenuItem<int>(
-      value: 9,
-      child: Container(
-        color: Colors.teal,
-        width: 48,
-        height: 48,
-      ),
-    ));
-    items.add(
-      DropdownMenuItem<int>(
-        value: 10,
-        child: Container(
-          color: Colors.purple,
-          width: 48,
-          height: 48,
-        ),
-      ),
-    );
-    items.add(
-      DropdownMenuItem<int>(
-        value: 11,
-        child: Container(
-          color: Colors.blue,
-          width: 48,
-          height: 48,
-        ),
-      ),
-    );
-
-    return DropdownButton<int>(items: items, onChanged: onChanged);
-  }
-
-  void onChanged(int? index) {
-    switch (index) {
-      case 0:
-        onColorPicked('red', Colors.red);
-        break;
-      case 1:
-        onColorPicked('black', Colors.black);
-        break;
-      case 2:
-        onColorPicked('white', Colors.white);
-        break;
-      case 3:
-        onColorPicked('orange', Colors.orange);
-        break;
-      case 4:
-        onColorPicked('green', Colors.green);
-        break;
-      case 5:
-        onColorPicked('indigo', Colors.indigo);
-        break;
-      case 6:
-        onColorPicked('pink', Colors.pink);
-        break;
-      case 7:
-        onColorPicked('amber', Colors.amber);
-        break;
-      case 8:
-        onColorPicked('yellow', Colors.yellow);
-        break;
-      case 9:
-        onColorPicked('teal', Colors.teal);
-        break;
-      case 10:
-        onColorPicked('purple', Colors.purple);
-        break;
-      case 11:
-        onColorPicked('blue', Colors.blue);
-        break;
-    }
-  }
-}
-
-class CityWidget extends StatelessWidget {
-  const CityWidget({Key? key, this.city, required this.title})
-      : super(key: key);
-  final City? city;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(width: 120, child: Text(title, style:
-        myTextStyleMediumLargeWithSize(context, 16),)),
-        const SizedBox(
-          width: 12,
-        ),
-        city == null
-            ? const SizedBox()
-            : Text(
-                '${city!.name}',
-                style: myTextStyleMediumBoldWithColor(
-                    context, Theme.of(context).primaryColor),
-              )
-      ],
-    );
   }
 }

@@ -20,6 +20,8 @@ import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_route_builder/ui/route_detail_form.dart';
 import 'package:realm/realm.dart';
 
+import '../widgets/searching_cities_busy.dart';
+
 class CityCreatorMap extends ConsumerStatefulWidget {
   const CityCreatorMap({
     Key? key,
@@ -245,7 +247,7 @@ class CityCreatorMapState extends ConsumerState<CityCreatorMap> {
         ),
         key: _key,
         body: _currentPosition == null
-            ? const AmBusy()
+            ? const SearchingCitiesBusy()
             : Stack(children: [
                 GoogleMap(
                   mapType: isHybrid ? MapType.hybrid : MapType.normal,

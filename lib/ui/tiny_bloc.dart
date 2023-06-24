@@ -14,10 +14,25 @@ class TinyBloc {
   final StreamController<lib.Route> _streamController = StreamController.broadcast();
   Stream<lib.Route> get routeStream  => _streamController.stream;
 
-  void setRoute(lib.Route route) {
-    pp('$mm ... putting route on _streamController...');
+  final StreamController<String> _streamIdController = StreamController.broadcast();
+  Stream<String> get routeIdStream  => _streamIdController.stream;
 
-    _streamController.sink.add(route);
+  void setRouteId(String routeId) {
+    pp('$mm ... putting routeId on _streamIdController...');
+
+    _streamIdController.sink.add(routeId);
+  }
+
+  lib.Route? getRouteFromCache(String routeId)  {
+    pp('$mm ... getting cached route ...');
+    var r = listApiDog.realm
+        .query<lib.Route>('routeId == \$0', [routeId]);
+    lib.Route? route;
+    if (r.isNotEmpty) {
+      route = r.first;
+      _streamController.sink.add(route);
+    }
+    return route;
   }
   Future<lib.Route?> getRoute(String routeId) async {
     pp('$mm ... getting cached route ...');
@@ -25,7 +40,7 @@ class TinyBloc {
         .query<lib.Route>('routeId == \$0', [routeId]);
     lib.Route? route;
     if (r.isNotEmpty) {
-      final route = r.first;
+      route = r.first;
       _streamController.sink.add(route);
     } else {
       final user = await prefs.getUser();

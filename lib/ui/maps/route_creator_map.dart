@@ -73,7 +73,6 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
     try {
       await _buildLandmarkIcons();
       await _getRouteLandmarks();
-      await _getRoutePoints(refresh);
 
     } catch (e) {
       pp(e);
@@ -100,7 +99,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
             //_deleteRoutePoint(routePoint);
           },
           infoWindow: InfoWindow(
-              snippet: 'This landmark is part of the route.',
+              snippet: '\nThis landmark is part of the route: \n${widget.route.name}\n\n',
               title: '🔵 ${landmark.landmarkName}',
               onTap: () {
                 pp('$mm ............. infoWindow tapped, point index: $index');
@@ -111,9 +110,19 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
       pp('$mm ... routeLandmark added to markers: ${_markers.length}');
     }
     setState(() {});
+    var last = routeLandmarks.last;
+    final latLng = LatLng(
+        last.position!.coordinates.last, last.position!.coordinates.first);
 
+    _animateCamera(latLng, 15.0);
+    await _getRoutePoints(false);
   }
 
+  Future<void> _animateCamera(LatLng latLng,  double zoom) async {
+    var cameraPos = CameraPosition(target: latLng, zoom: zoom);
+    final GoogleMapController controller = await _mapController.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
+  }
   Future _buildLandmarkIcons() async {
     for (var i = 0; i < 120; i++) {
       var intList =
@@ -130,11 +139,14 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
     try {
       _user = await prefs.getUser();
       pp('$mm getting existing RoutePoints ....... refresh: $refresh');
+      setState(() {
+        busy = true;
+      });
       existingRoutePoints =
           await listApiDog.getRoutePoints(widget.route.routeId!, refresh);
       pp('$mm .......... existingRoutePoints ....  🍎 found: '
           '${existingRoutePoints.length} points');
-      _buildExistingMarkers();
+      await _buildExistingMarkers();
     } catch (e) {
       pp(e);
     }
@@ -144,9 +156,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   }
 
   Future<void> _buildExistingMarkers() async {
-    setState(() {
-      busy = true;
-    });
+
     await _makeDotMarker();
     if (existingRoutePoints.isNotEmpty) {
       for (var routePoint in existingRoutePoints) {
@@ -174,9 +184,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
       totalPoints = existingRoutePoints.length;
       index = existingRoutePoints.length - 1;
 
-      var cameraPos = CameraPosition(target: latLng, zoom: 13.0);
-      final GoogleMapController controller = await _mapController.future;
-      await controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
+      _animateCamera(latLng, 16);
     }
     setState(() {
       busy = false;
@@ -238,23 +246,30 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
 
   bool checkDistance(LatLng latLng) {
     double? mLat, mLng;
+    lib.RoutePoint? prev;
     try {
-      if (index > 1) {
-        mLat = rpList.elementAt(index - 2).position!.coordinates.last;
-        mLng = rpList.elementAt(index - 2).position!.coordinates.first;
+      prev = rpList.last;
+      mLat = prev.position!.coordinates.last;
+      mLng = prev.position!.coordinates.first;
+    } catch(e) {
+      return true;
+    }
+
+    try {
         var dist = locationBloc.getDistance(
             latitude: latLng.latitude,
             longitude: latLng.longitude,
             toLatitude: mLat,
             toLongitude: mLng);
+
         if (dist > 50) {
-          pp('$mm ... this is probably a rogue routePoint: ${E.redDot} '
-              '${E.redDot}${E.redDot} distance from previous point: $dist metres');
+          pp('\n\n\n$mm ... this is probably a rogue routePoint: ${E.redDot} '
+              '${E.redDot}${E.redDot} distance from previous point:  ${E.redDot} $dist metres');
           return false;
         } else {
           pp('$mm distance from previous point: ${E.appleGreen} $dist metres');
         }
-      }
+
     } catch (e) {
       pp('$mm checkDistance failed: ${E.redDot} ');
     }
@@ -295,7 +310,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
             }),
         position: LatLng(latLng.latitude, latLng.longitude)));
 
-    rpList.add(routePoint);
+    existingRoutePoints.add(routePoint);
     if (timer == null) {
       startTimer();
     }
@@ -344,6 +359,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
     setState(() {
       busy = true;
     });
+    existingRoutePoints.remove(point);
     try {
       var id = point.routePointId!;
       var res = _markers.remove(Marker(markerId: MarkerId(id)));
@@ -354,7 +370,8 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
         pp('$mm ... start delete ...');
         final result = await dataApiDog.deleteRoutePoint(id);
         pp('$mm ... removed point from database: $result; ${E.nice} 0 is good, Boss!');
-        await _getRoutePoints(true);
+        await _buildExistingMarkers();
+
       } catch (e) {}
     } catch (e) {
       pp('$mm $e');
