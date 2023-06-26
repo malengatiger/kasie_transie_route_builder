@@ -3,8 +3,6 @@
 	README.md,8/e/8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d
 C
 assets/l10n/af.json,d/5/d561064bc56d00f90fac4be2dd98ed7db721b097
-^
-.android/app/src/main/res/drawable/app_icon.xml,4/1/41be73f05525cc44d6c6cf9f8c491ad0a1dae296
 I
 lib/generated/assets.dart,5/b/5b815209f3ac1d4b94a4211dbfb903428d4ed1c2
 b
@@ -83,8 +81,6 @@ R
 "ios/Flutter/AppFrameworkInfo.plist,d/c/dcf6bab66022807af0d3467afc4bc1c2594538c4
 U
 %macos/Runner/Configs/AppInfo.xcconfig,7/5/75e3aec2f7b1dab9d57d4f4ae57cc2929646c452
-H
-android/app/build.gradle,5/9/594ba479000e0bb5513707b709ad1cd52da9063a
 D
 android/build.gradle,1/3/13f012f60e18f38225ce59137db2e07d5d70b29c
 L
@@ -231,3 +227,17 @@ G
 linux/my_application.cc,9/9/995c5ee66ec6a6d46ba2668734a5503c7d0cdf32
 Q
 !lib/ui/maps/route_map_editor.dart,d/c/dc6e28c2fcc86545694b989bc9281fb438ace395
+J
+lib/intro/kasie_intro.dart,8/2/82f248876dbd4c1eae928a0af1a06ab11db3b739
+Q
+!lib/ui/maps/city_creator_map.dart,e/a/eae603e11a14ed35b442a4a429430f086d708293
+O
+lib/ui/widgets/city_widget.dart,5/2/52b48125290257b080c1538e83203e89e8e448d7
+M
+lib/ui/widgets/color_pad.dart,3/e/3e8a96f062af2a9bbbb41cfc74c4378ef3bdfe64
+P
+ lib/ui/widgets/color_picker.dart,7/e/7eb0d306c2604ec9de16b2c2c3c14e39fcdbf9e3
+Y
+)lib/ui/widgets/searching_cities_busy.dart,d/5/d5b0088125e0c046a4b8257f01477b096edba8a8
+H
+android/app/build.gradle,5/9/594ba479000e0bb5513707b709ad1cd52da9063a

@@ -39,7 +39,6 @@ Future<void> main() async {
   pp('$mx ... getCountries starting from LandingPage ...');
 
   me = await prefs.getUser();
-  await initializer.getCountries();
   runApp(const ProviderScope(child: KasieTransieApp()));
 }
 

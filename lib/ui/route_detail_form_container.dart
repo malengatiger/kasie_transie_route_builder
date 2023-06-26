@@ -21,11 +21,12 @@ class RouteDetailFormContainer extends StatelessWidget {
         required this.color,
         required this.onSubmit,
         required this.onColorSelected,
-        required this.onRefresh, required this.radiusInKM, required this.numberOfCities})
+        required this.onRefresh, required this.radiusInKM, required this.numberOfCities, required this.onSendRouteUpdateMessage})
       : super(key: key);
 
   final GlobalKey<FormState> formKey;
   final Function onRouteStartSearch;
+  final Function onSendRouteUpdateMessage;
   final Function onRouteEndSearch, onSubmit;
   final Function(Color, String) onColorSelected;
   final City? nearestStart, nearestEnd;
@@ -239,7 +240,19 @@ class RouteDetailFormContainer extends StatelessWidget {
                                     child: Text('Save Route'),
                                   )),
                               const SizedBox(
-                                height: 120,
+                                height: 48,
+                              ),
+                              ElevatedButton(
+                                  onPressed: () {
+                                    onSendRouteUpdateMessage();
+                                  },
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 40.0, vertical: 20),
+                                    child: Text('Send Route Update Message'),
+                                  )),
+                              const SizedBox(
+                                height: 60,
                               ),
                             ],
                           ),

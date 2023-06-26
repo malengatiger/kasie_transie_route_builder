@@ -254,7 +254,10 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title:  Text('Next Step?', style: myTextStyleLarge(context),),
+              title: Text(
+                'Next Step?',
+                style: myTextStyleLarge(context),
+              ),
               actions: <Widget>[
                 TextButton(
                   child: const Text('No'),
@@ -290,6 +293,33 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
   bool _showTheFuckingSearch = false;
 
   double radiusInKM = 25;
+
+  bool sendingRouteUpdateMessage = false;
+  void onSendRouteUpdateMessage() async {
+    pp("$mm onSendRouteUpdateMessage .........");
+    setState(() {
+      sendingRouteUpdateMessage = true;
+    });
+    try {
+      if (widget.route != null) {
+        await dataApiDog.sendRouteUpdateMessage(
+            widget.route!.associationId!, widget.route!.routeId!);
+        pp('$mm onSendRouteUpdateMessage happened OK! ${E.nice}');
+      }
+    } catch (e) {
+      pp(e);
+      showToast(
+          duration: const Duration(seconds: 5),
+          padding: 20,
+          textStyle: myTextStyleMedium(context),
+          backgroundColor: Colors.amber,
+          message: 'Route Update message sent OK', context: context);
+    }
+    setState(() {
+      sendingRouteUpdateMessage = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     var leftPadding = 64.0;
@@ -318,6 +348,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
                     ? const SearchingCitiesBusy()
                     : RouteDetailFormContainer(
                         formKey: _formKey,
+                        onSendRouteUpdateMessage: onSendRouteUpdateMessage,
                         onRouteStartSearch: findNearestStartCity,
                         onRouteEndSearch: findNearestEndCity,
                         color: color,
@@ -349,6 +380,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
                       width: (width / 2) + 48,
                       child: RouteDetailFormContainer(
                         formKey: _formKey,
+                        onSendRouteUpdateMessage: onSendRouteUpdateMessage,
                         numberOfCities: _cities.length,
                         onRouteStartSearch: findNearestStartCity,
                         onRouteEndSearch: findNearestEndCity,

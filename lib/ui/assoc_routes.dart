@@ -8,9 +8,11 @@ import 'package:focused_menu/modals.dart';
 import 'package:kasie_transie_library/bloc/data_api_dog.dart';
 import 'package:kasie_transie_library/bloc/list_api_dog.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
+import 'package:kasie_transie_library/messaging/fcm_bloc.dart';
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/emojis.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
+import 'package:kasie_transie_library/utils/initializer.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_route_builder/ui/maps/city_creator_map.dart';
@@ -46,12 +48,30 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   final StreamController<String> _streamController =
       StreamController.broadcast();
   Stream<String> get routeIdStream => _streamController.stream;
+  late StreamSubscription<String> routeChangesSub;
 
   @override
   void initState() {
     super.initState();
     _listen();
     _getUser();
+    initialize();
+  }
+
+  String? routeId;
+  void initialize() {
+    fcmBloc.subscribeToTopics();
+    routeChangesSub = fcmBloc.routeChangesStream.listen((event) {
+      pp('$mm routeChangesStream delivered a routeId: $event');
+      routeId = event;
+      setState(() {
+
+      });
+      if (mounted) {
+        showSnackBar(message: "A Route update has been issued. The download will happen automatically.", context: context);
+      }
+    });
+    initializer.initialize();
   }
 
   void _listen() {
@@ -109,7 +129,6 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     setState(() {
       selectedRoute = route;
       selectedRouteId = route.routeId;
-
     });
     pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
 
@@ -119,10 +138,11 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
       //route = await listApiDog.
       navigateWithScale(
           RouteMapViewer(
-            route: route, onRouteUpdated: (){
+            route: route,
+            onRouteUpdated: () {
               pp('\n\n$mm onRouteUpdated ... do something Boss!');
               _refresh(true);
-          },
+            },
           ),
           context);
     }
@@ -134,7 +154,6 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     setState(() {
       selectedRoute = route;
       selectedRouteId = route.routeId;
-
     });
     pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
 
@@ -157,6 +176,31 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
         .getRoutes(AssociationParameter(user!.associationId!, refresh));
     setState(() {
       busy = false;
+    });
+  }
+
+  bool sendingRouteUpdateMessage = false;
+  void onSendRouteUpdateMessage(lib.Route route) async {
+    pp("$mm onSendRouteUpdateMessage .........");
+    setState(() {
+      sendingRouteUpdateMessage = true;
+    });
+    try {
+      await dataApiDog.sendRouteUpdateMessage(
+          route.associationId!, route.routeId!);
+      pp('$mm onSendRouteUpdateMessage happened OK! ${E.nice}');
+    } catch (e) {
+      pp(e);
+      showToast(
+          duration: const Duration(seconds: 5),
+          padding: 20,
+          textStyle: myTextStyleMedium(context),
+          backgroundColor: Colors.amber,
+          message: 'Route Update message sent OK',
+          context: context);
+    }
+    setState(() {
+      sendingRouteUpdateMessage = false;
     });
   }
 
@@ -230,11 +274,14 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                             : ScreenTypeLayout.builder(
                                 mobile: (ctx) {
                                   return RouteList(
-                                      navigateToMapViewer: navigateToMapViewer,
-                                      navigateToLandmarks: navigateToLandmarks,
-                                      navigateToCreatorMap:
-                                          navigateToCreatorMap,
-                                      routes: routes);
+                                    navigateToMapViewer: navigateToMapViewer,
+                                    navigateToLandmarks: navigateToLandmarks,
+                                    navigateToCreatorMap: navigateToCreatorMap,
+                                    routes: routes,
+                                    onSendRouteUpdateMessage: (route) {
+                                      onSendRouteUpdateMessage(route);
+                                    },
+                                  );
                                 },
                                 tablet: (ctx) {
                                   return OrientationLayoutBuilder(
@@ -247,13 +294,17 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                         SizedBox(
                                           width: (width / 2) - 60,
                                           child: RouteList(
-                                              navigateToMapViewer:
-                                                  navigateToMapViewer,
-                                              navigateToLandmarks:
-                                                  navigateToLandmarks,
-                                              navigateToCreatorMap:
-                                                  navigateToCreatorMap,
-                                              routes: routes),
+                                            navigateToMapViewer:
+                                                navigateToMapViewer,
+                                            navigateToLandmarks:
+                                                navigateToLandmarks,
+                                            navigateToCreatorMap:
+                                                navigateToCreatorMap,
+                                            routes: routes,
+                                            onSendRouteUpdateMessage: (route) {
+                                              onSendRouteUpdateMessage(route);
+                                            },
+                                          ),
                                         ),
                                         const SizedBox(
                                           width: 32,
@@ -272,14 +323,18 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                         SizedBox(
                                           width: (width / 2) - 24,
                                           child: RouteList(
-                                              navigateToMapViewer:
-                                                  navigateToMapViewer,
-                                              navigateToLandmarks:
-                                                  navigateToLandmarks,
-                                              navigateToCreatorMap:
-                                                  navigateToCreatorMap,
-                                              currentRoute: selectedRoute,
-                                              routes: routes),
+                                            navigateToMapViewer:
+                                                navigateToMapViewer,
+                                            navigateToLandmarks:
+                                                navigateToLandmarks,
+                                            navigateToCreatorMap:
+                                                navigateToCreatorMap,
+                                            currentRoute: selectedRoute,
+                                            routes: routes,
+                                            onSendRouteUpdateMessage: (route) {
+                                              onSendRouteUpdateMessage(route);
+                                            },
+                                          ),
                                         ),
                                         const SizedBox(
                                           width: 8,
@@ -313,8 +368,6 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
               ],
             )));
   }
-
-  void _navigateToDetail(lib.Route rt) {}
 }
 
 class WaitingForGodot extends StatelessWidget {
@@ -378,14 +431,16 @@ class RouteList extends StatelessWidget {
       required this.navigateToLandmarks,
       required this.navigateToCreatorMap,
       required this.routes,
-      this.currentRoute})
+      this.currentRoute,
+      required this.onSendRouteUpdateMessage})
       : super(key: key);
 
   final Function(lib.Route) navigateToMapViewer;
   final Function(lib.Route) navigateToLandmarks;
   final Function(lib.Route) navigateToCreatorMap;
-  final List<lib.Route> routes;
+  final Function(lib.Route) onSendRouteUpdateMessage;
 
+  final List<lib.Route> routes;
   final lib.Route? currentRoute;
 
   List<FocusedMenuItem> _getMenuItems(lib.Route route, BuildContext context) {
@@ -423,6 +478,17 @@ class RouteList extends StatelessWidget {
           navigateToCreatorMap(route);
         }));
 
+    list.add(FocusedMenuItem(
+        title: Text('Send Route Update Message',
+            style: myTextStyleMediumBlack(context)),
+        // backgroundColor: Theme.of(context).primaryColor,
+        trailingIcon: Icon(
+          Icons.edit,
+          color: Theme.of(context).primaryColor,
+        ),
+        onPressed: () {
+          onSendRouteUpdateMessage(route);
+        }));
     return list;
   }
 

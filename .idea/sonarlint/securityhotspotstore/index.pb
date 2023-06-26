@@ -7,8 +7,6 @@
 -assets/payment/default_google_pay_config.json,6/f/6ffedcfda8515a0ff6c83ef139a9ce49329eb2b5
 b
 2lib/intro/kasie_auth/association_registration.dart,f/0/f0dafc98f3419a66a42823869ca83730e76d1736
-^
-.android/app/src/main/res/drawable/app_icon.xml,4/1/41be73f05525cc44d6c6cf9f8c491ad0a1dae296
 M
 lib/intro/intro_page_one.dart,4/6/464c2440c935f8ad7fe225cee4b37dbc68b30b09
 X
@@ -175,8 +173,6 @@ a
 1macos/Runner.xcworkspace/contents.xcworkspacedata,d/5/d5ec1edba6b372bf6021ad9a30635aa7491da466
 n
 >macos/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist,f/0/f0fba35a1dc47e61fa539dd6c0357fc0afb69aea
-H
-android/app/build.gradle,5/9/594ba479000e0bb5513707b709ad1cd52da9063a
 m
 =macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme,3/1/3148bc763b53b8b8750bb6c9a3d55991c96b1aeb
 €
@@ -231,3 +227,17 @@ U
 %.idea/runConfigurations/main_dart.xml,4/0/4075432bf12db9b56969c95a525e03d742f7e86d
 Q
 !lib/ui/maps/route_map_editor.dart,d/c/dc6e28c2fcc86545694b989bc9281fb438ace395
+J
+lib/intro/kasie_intro.dart,8/2/82f248876dbd4c1eae928a0af1a06ab11db3b739
+Y
+)lib/ui/widgets/searching_cities_busy.dart,d/5/d5b0088125e0c046a4b8257f01477b096edba8a8
+Q
+!lib/ui/maps/city_creator_map.dart,e/a/eae603e11a14ed35b442a4a429430f086d708293
+O
+lib/ui/widgets/city_widget.dart,5/2/52b48125290257b080c1538e83203e89e8e448d7
+M
+lib/ui/widgets/color_pad.dart,3/e/3e8a96f062af2a9bbbb41cfc74c4378ef3bdfe64
+P
+ lib/ui/widgets/color_picker.dart,7/e/7eb0d306c2604ec9de16b2c2c3c14e39fcdbf9e3
+H
+android/app/build.gradle,5/9/594ba479000e0bb5513707b709ad1cd52da9063a

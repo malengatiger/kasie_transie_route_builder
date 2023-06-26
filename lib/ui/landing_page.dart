@@ -3,6 +3,7 @@ import 'package:kasie_transie_library/bloc/data_api_dog.dart';
 import 'package:kasie_transie_library/bloc/list_api_dog.dart';
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
+import 'package:kasie_transie_library/utils/initializer.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_route_builder/ui/assoc_routes.dart';
@@ -50,6 +51,7 @@ class LandingPageState extends State<LandingPage>
         pp('$mm ..... settings fixed!');
       }
     }
+    initializer.initialize();
   }
 
   onRouteSelected(lib.Route p1) {
