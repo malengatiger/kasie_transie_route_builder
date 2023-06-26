@@ -90,7 +90,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     });
     try {
       user = await prefs.getUser();
-      _refresh(true);
+      _refresh(false);
     } catch (e) {
       pp(e);
     }

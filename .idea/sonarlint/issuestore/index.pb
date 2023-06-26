@@ -241,3 +241,17 @@ Y
 )lib/ui/widgets/searching_cities_busy.dart,d/5/d5b0088125e0c046a4b8257f01477b096edba8a8
 H
 android/app/build.gradle,5/9/594ba479000e0bb5513707b709ad1cd52da9063a
+R
+"lib/ui/maps/route_creator_map.dart,c/0/c0f26b59c60e452915f4c63d02636a22d12db5ba
+^
+.android/app/src/main/res/drawable/app_icon.xml,4/1/41be73f05525cc44d6c6cf9f8c491ad0a1dae296
+J
+lib/intro/splash_page.dart,5/1/519c5669eb9f9000279cb6abe40f1287040a0798
+Q
+!.idea/libraries/Dart_Packages.xml,f/c/fc67c2d2441e33af1dbd1e910281523d1ce74b4a
+^
+.windows/flutter/generated_plugin_registrant.cc,a/4/a460a0a443b57f23ba67cbcc77064889847c76a7
+W
+'windows/flutter/generated_plugins.cmake,8/8/88ca6865187a33a9504c7309c5e20c833b7b0094
+@
+ios/Podfile.lock,6/f/6fc5efc9eba1a38c53e9a557a6ebda2b662185e1
