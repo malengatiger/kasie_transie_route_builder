@@ -42,7 +42,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
   geo.Position? _currentPosition;
   final Set<Marker> _markers = HashSet();
   final Set<Circle> _circles = HashSet();
-  final Set<Polyline> _polyLines = Set();
+  final Set<Polyline> _polyLines = {};
   BitmapDescriptor? _dotMarker;
   // List<BitmapDescriptor> _numberMarkers = [];
   final List<lib.RoutePoint> rpList = [];
@@ -152,7 +152,8 @@ class RouteMapViewerState extends State<RouteMapViewer> {
           markerId: MarkerId('${landmark.landmarkId}'),
           icon: numberMarkers.elementAt(landmarkIndex),
           onTap: () {
-            pp('$mm .............. marker tapped: $index');
+            pp('$mm .............. marker tapped, index: $index, $latLng - '
+                'landmarkId: ${landmark.landmarkId} - routeId: ${landmark.routeId}');
           },
           infoWindow: InfoWindow(
               snippet:
@@ -204,10 +205,12 @@ class RouteMapViewerState extends State<RouteMapViewer> {
         });
 
   }
+
   void _popOut() {
     Navigator.of(context).pop();
     Navigator.of(context).pop();
   }
+
   Future _getRoutePoints(bool refresh) async {
     setState(() {
       busy = true;

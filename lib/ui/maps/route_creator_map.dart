@@ -15,6 +15,7 @@ import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:realm/realm.dart';
 
+///Using a map, place each route point after another till the route is mapped
 class RouteCreatorMap extends StatefulWidget {
   final lib.Route route;
 
@@ -52,7 +53,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   List<poly.PointLatLng>? polylinePoints;
   final numberMarkers = <BitmapDescriptor>[];
 
-  int index = 0;
+  int routePointIndex = 0;
   bool sending = false;
   Timer? timer;
   int totalPoints = 0;
@@ -73,7 +74,6 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
     try {
       await _buildLandmarkIcons();
       await _getRouteLandmarks();
-
     } catch (e) {
       pp(e);
     }
@@ -84,9 +84,9 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
 
   Future _getRouteLandmarks() async {
     routeLandmarks =
-    await listApiDog.getRouteLandmarks(widget.route.routeId!, true);
+        await listApiDog.getRouteLandmarks(widget.route.routeId!, true);
     pp('\n\n$mm _getRouteLandmarks ...  ${E.appleRed} route: ${widget.route.name}; found: ${routeLandmarks.length} ');
-    routeLandmarks.sort((a,b) => a.created!.compareTo(b.created!));
+    routeLandmarks.sort((a, b) => a.created!.compareTo(b.created!));
     landmarkIndex = 0;
     for (var landmark in routeLandmarks) {
       final latLng = LatLng(landmark.position!.coordinates.last,
@@ -95,14 +95,15 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
           markerId: MarkerId('${landmark.landmarkId}'),
           icon: numberMarkers.elementAt(landmarkIndex),
           onTap: () {
-            pp('$mm .............. marker tapped: $index');
+            pp('$mm .............. marker tapped: $routePointIndex');
             //_deleteRoutePoint(routePoint);
           },
           infoWindow: InfoWindow(
-              snippet: '\nThis landmark is part of the route: \n${widget.route.name}\n\n',
+              snippet:
+                  '\nThis landmark is part of the route: \n${widget.route.name}\n\n',
               title: '🔵 ${landmark.landmarkName}',
               onTap: () {
-                pp('$mm ............. infoWindow tapped, point index: $index');
+                pp('$mm ............. infoWindow tapped, point index: $routePointIndex');
                 //_deleteLandmark(landmark);
               }),
           position: latLng));
@@ -118,15 +119,16 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
     await _getRoutePoints(false);
   }
 
-  Future<void> _animateCamera(LatLng latLng,  double zoom) async {
+  Future<void> _animateCamera(LatLng latLng, double zoom) async {
     var cameraPos = CameraPosition(target: latLng, zoom: zoom);
     final GoogleMapController controller = await _mapController.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
   }
+
   Future _buildLandmarkIcons() async {
     for (var i = 0; i < 120; i++) {
       var intList =
-      await getBytesFromAsset("assets/numbers/number_${i + 1}.png", 84);
+          await getBytesFromAsset("assets/numbers/number_${i + 1}.png", 84);
       numberMarkers.add(BitmapDescriptor.fromBytes(intList));
     }
     pp('$mm have built ${numberMarkers.length} markers for landmarks');
@@ -146,6 +148,7 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
           await listApiDog.getRoutePoints(widget.route.routeId!, refresh);
       pp('$mm .......... existingRoutePoints ....  🍎 found: '
           '${existingRoutePoints.length} points');
+      routePointIndex = existingRoutePoints.length;
       await _buildExistingMarkers();
     } catch (e) {
       pp(e);
@@ -156,7 +159,6 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   }
 
   Future<void> _buildExistingMarkers() async {
-
     await _makeDotMarker();
     if (existingRoutePoints.isNotEmpty) {
       for (var routePoint in existingRoutePoints) {
@@ -170,11 +172,11 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
                   'marker tapped: routePointId: ${routePoint.toJson()}');
             },
             infoWindow: InfoWindow(
-                title: 'RoutePoint ${index + 1}',
-                snippet: "This route point is part of the route. Tap to remove",
+                title: 'RoutePoint ${routePointIndex + 1}',
+                snippet: "\nThis route point is part of the route. Tap to remove\n\n",
                 onTap: () {
-                  pp('$mm ............. infoWindow tapped: ${index + 1}');
-                  _deleteRoutePoint(routePoint);
+                  pp('$mm ............. infoWindow tapped: ${routePointIndex + 1}');
+                  _deleteRoutePoint(routePoint.routePointId!);
                 }),
             position: LatLng(latLng.latitude, latLng.longitude)));
       }
@@ -182,19 +184,13 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
       final latLng = LatLng(
           last.position!.coordinates.last, last.position!.coordinates.first);
       totalPoints = existingRoutePoints.length;
-      index = existingRoutePoints.length - 1;
+      routePointIndex = existingRoutePoints.length;
 
       _animateCamera(latLng, 16);
     }
     setState(() {
       busy = false;
     });
-  }
-
-  void _clearMap() {
-    _polyLines.clear();
-    _markers.clear();
-    setState(() {});
   }
 
   @override
@@ -215,21 +211,9 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
   }
 
   Future _makeDotMarker() async {
-    var intList = await getBytesFromAsset("assets/markers/dot2.png", 32);
+    var intList = await getBytesFromAsset("assets/markers/dot2.png", 64);
     _dotMarker = BitmapDescriptor.fromBytes(intList);
     pp('$mm custom marker 💜 assets/markers/dot2.png created');
-  }
-
-  Future _getCurrentLocation() async {
-    pp('$mm .......... get current location ....');
-    _currentPosition = await locationBloc.getLocation();
-
-    pp('$mm .......... get current location ....  🍎 found: ${_currentPosition!.toJson()}');
-    _myCurrentCameraPosition = CameraPosition(
-      target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-      zoom: defaultZoom,
-    );
-    setState(() {});
   }
 
   Future<void> _zoomToStartCity() async {
@@ -251,25 +235,24 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
       prev = rpList.last;
       mLat = prev.position!.coordinates.last;
       mLng = prev.position!.coordinates.first;
-    } catch(e) {
+    } catch (e) {
       return true;
     }
 
     try {
-        var dist = locationBloc.getDistance(
-            latitude: latLng.latitude,
-            longitude: latLng.longitude,
-            toLatitude: mLat,
-            toLongitude: mLng);
+      var dist = locationBloc.getDistance(
+          latitude: latLng.latitude,
+          longitude: latLng.longitude,
+          toLatitude: mLat,
+          toLongitude: mLng);
 
-        if (dist > 50) {
-          pp('\n\n\n$mm ... this is probably a rogue routePoint: ${E.redDot} '
-              '${E.redDot}${E.redDot} distance from previous point:  ${E.redDot} $dist metres');
-          return false;
-        } else {
-          pp('$mm distance from previous point: ${E.appleGreen} $dist metres');
-        }
-
+      if (dist > 50) {
+        pp('\n\n\n$mm ... this is probably a rogue routePoint: ${E.redDot} '
+            '${E.redDot}${E.redDot} distance from previous point:  ${E.redDot} $dist metres');
+        return false;
+      } else {
+        pp('$mm distance from previous point: ${E.appleGreen} $dist metres');
+      }
     } catch (e) {
       pp('$mm checkDistance failed: ${E.redDot} ');
     }
@@ -281,54 +264,55 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
       return;
     }
 
+    var id = Uuid.v4().toString();
+    _markers.add(Marker(
+        markerId: MarkerId(id),
+        icon: _dotMarker!,
+        onTap: () {
+          pp('$mm .............. marker tapped: $routePointIndex ${E.blueDot} '
+              'latLng: $latLng - routePointId: $id');
+        },
+        infoWindow: InfoWindow(
+            snippet: '\nThis point is part of the route. Tap to remove\n\n',
+            title: 'RoutePoint ${routePointIndex + 1}',
+            onTap: () {
+              pp('$mm ............. infoWindow tapped, point index: $routePointIndex'
+                  'latLng: $latLng - routePointId: $id ${E.redDot} DELETE!!');
+              _deleteRoutePoint(id);
+            }),
+        position: LatLng(latLng.latitude, latLng.longitude)));
+
+    if (timer == null) {
+      startTimer();
+    }
+    totalPoints++;
+    pp('$mm RoutePoint added to map; index: $routePointIndex '
+        '🔵 🔵 🔵 total points: $totalPoints');
+
+    routePointIndex++;
     var routePoint = lib.RoutePoint(ObjectId(),
         latitude: latLng.latitude,
         longitude: latLng.longitude,
         routeId: widget.route.routeId,
-        index: index,
+        routeName: widget.route.name,
+        index: routePointIndex,
         position: lib.Position(
           coordinates: [latLng.longitude, latLng.latitude],
           latitude: latLng.latitude,
           longitude: latLng.longitude,
         ),
-        routePointId: Uuid.v4().toString(),
-        created: DateTime.now().toIso8601String());
-
-    _markers.add(Marker(
-        markerId: MarkerId('${routePoint.index}'),
-        icon: _dotMarker!,
-        onTap: () {
-          pp('$mm .............. marker tapped: $index');
-          // _deleteRoutePoint(routePoint);
-        },
-        infoWindow: InfoWindow(
-            snippet: 'This point is part of the route. Tap to remove',
-            title: 'RoutePoint ${index + 1}',
-            onTap: () {
-              pp('$mm ............. infoWindow tapped, point index: $index');
-              _deleteRoutePoint(routePoint);
-            }),
-        position: LatLng(latLng.latitude, latLng.longitude)));
+        routePointId: id,
+        created: DateTime.now().toUtc().toIso8601String());
 
     existingRoutePoints.add(routePoint);
-    if (timer == null) {
-      startTimer();
-    }
-    pp('$mm RoutePoint added to map and list; '
-        '🔵 🔵 🔵 total points: ${rpList.length}');
-
-    index++;
-    totalPoints++;
-    var cameraPos = CameraPosition(target: latLng, zoom: defaultZoom + 6);
-
-    final GoogleMapController controller = await _mapController.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
+    rpList.add(routePoint);
+    _animateCamera(latLng, defaultZoom + 6);
     setState(() {});
   }
 
   void startTimer() {
     pp('$mm ... startTimer ... ');
-    timer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    timer = Timer.periodic(const Duration(seconds: 60), (timer) {
       pp('$mm timer ticked: 💛️💛️ ${timer.tick}');
       _sendRoutePointsToBackend();
     });
@@ -355,30 +339,41 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
     pp('$mm ... _sendRoutePointsToBackend: ❤️❤️route points saved to Kasie backend: ❤️ $count ❤️ DONE!\n\n');
   }
 
-  void _deleteRoutePoint(lib.RoutePoint point) async {
-    setState(() {
-      busy = true;
-    });
-    existingRoutePoints.remove(point);
-    try {
-      var id = point.routePointId!;
-      var res = _markers.remove(Marker(markerId: MarkerId(id)));
-      totalPoints--;
-      pp('$mm ... removed marker from map: $res, ${E.nice} = true, if not, we fucked!');
-      myPrettyJsonPrint(point.toJson());
-      try {
-        pp('$mm ... start delete ...');
-        final result = await dataApiDog.deleteRoutePoint(id);
-        pp('$mm ... removed point from database: $result; ${E.nice} 0 is good, Boss!');
-        await _buildExistingMarkers();
+  void _deleteRoutePoint(String routePointId) async {
 
-      } catch (e) {}
-    } catch (e) {
-      pp('$mm $e');
+    bool found = false;
+    lib.RoutePoint? routePoint;
+    for (var rp in rpList) {
+      if (rp.routePointId == routePointId) {
+        found = true;
+        routePoint = rp;
+      }
     }
-    setState(() {
-      busy = false;
-    });
+    if (found) {
+      rpList.remove(routePoint);
+      existingRoutePoints.remove(routePoint);
+      totalPoints--;
+      var res = _markers.remove(Marker(markerId: MarkerId(routePointId)));
+      pp('$mm ... removed marker from map, result: $res, ${E.nice} = true, '
+          ' ${E.redDot} if not, the routePoint was no longer '
+          'in the current list and must be deleted from backend');
+      setState(() {});
+    } else {
+      try {
+        setState(() {
+          busy = true;
+        });
+          pp('$mm ... start delete ...');
+          final result = await dataApiDog.deleteRoutePoint(routePointId);
+          pp('$mm ... removed point from database: $result; ${E.nice} 0 is good, Boss!');
+
+      } catch (e) {
+        pp('$mm $e');
+      }
+      setState(() {
+        busy = false;
+      });
+    }
   }
 
   @override
@@ -430,13 +425,19 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
                     color: Colors.black38,
                     shape: getRoundedBorder(radius: 16),
                     elevation: 24,
-                    child: SizedBox(height: 108,
+                    child: SizedBox(
+                      height: 108,
                       child: Padding(
                         padding: const EdgeInsets.all(4.0),
                         child: Column(
                           children: [
-                            const SizedBox(height: 4,),
-                            Text('Route Mapper', style: myTextStyleMediumLarge(context),),
+                            const SizedBox(
+                              height: 4,
+                            ),
+                            Text(
+                              'Route Mapper',
+                              style: myTextStyleMediumLarge(context),
+                            ),
                             Row(
                               children: [
                                 const Icon(
@@ -457,9 +458,13 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4,),
-                            Text('${widget.route.associationName}', style: myTextStyleTiny(context),),
-
+                            const SizedBox(
+                              height: 4,
+                            ),
+                            Text(
+                              '${widget.route.associationName}',
+                              style: myTextStyleTiny(context),
+                            ),
                           ],
                         ),
                       ),
@@ -467,13 +472,40 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
                   ))),
           Positioned(
               left: 16,
-              bottom: 40,
+              bottom: 80,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  '$totalPoints',
-                  style:
-                      myNumberStyleLargerWithColor(Colors.black26, 44, context),
+                child: Row(
+                  children: [
+                    const Text('Points'),
+                    const SizedBox(
+                      width: 16,
+                    ),
+                    Text(
+                      '$totalPoints',
+                      style: myNumberStyleLargerWithColor(
+                          Colors.black26, 44, context),
+                    ),
+                  ],
+                ),
+              )),
+          Positioned(
+              left: 16,
+              bottom: 20,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    const Text('Index:'),
+                    const SizedBox(
+                      width: 16,
+                    ),
+                    Text(
+                      '$routePointIndex',
+                      style: myNumberStyleLargerWithColor(
+                          Colors.black26, 20, context),
+                    ),
+                  ],
                 ),
               )),
           Positioned(

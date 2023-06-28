@@ -12,7 +12,6 @@ import 'package:kasie_transie_library/messaging/fcm_bloc.dart';
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/emojis.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
-import 'package:kasie_transie_library/utils/initializer.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_route_builder/ui/maps/city_creator_map.dart';
@@ -20,6 +19,7 @@ import 'package:kasie_transie_route_builder/ui/maps/landmark_creator_map.dart';
 import 'package:kasie_transie_route_builder/ui/route_detail_form.dart';
 import 'package:kasie_transie_route_builder/ui/route_info_widget.dart';
 import 'package:kasie_transie_route_builder/ui/tiny_bloc.dart';
+import 'package:kasie_transie_route_builder/utils/route_distance_calculator.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 
 import 'maps/route_creator_map.dart';
@@ -59,7 +59,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   }
 
   String? routeId;
-  void initialize() {
+  Future<void> initialize() async {
     fcmBloc.subscribeToTopics();
     routeChangesSub = fcmBloc.routeChangesStream.listen((event) {
       pp('$mm routeChangesStream delivered a routeId: $event');
@@ -71,7 +71,6 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
         showSnackBar(message: "A Route update has been issued. The download will happen automatically.", context: context);
       }
     });
-    initializer.initialize();
   }
 
   void _listen() {
@@ -102,6 +101,11 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   lib.Route? selectedRoute;
   String? selectedRouteId;
 
+  @override
+  void dispose() {
+    routeChangesSub.cancel();
+    super.dispose();
+  }
   void navigateToLandmarks(lib.Route route) async {
     pp('$mm navigateToLandmarksEditor .....  route: ${route.name}');
     tinyBloc.setRouteId(route.routeId!);
@@ -179,6 +183,17 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     });
   }
 
+  void updateAssociationRouteLandmarks() async {
+    pp('$mm updateAssociationRouteLandmarks requested.... ');
+    setState(() {
+      busy = true;
+    });
+      await dataApiDog.updateAssociationRouteLandmarks(user!.associationId!);
+    setState(() {
+      busy = false;
+    });
+  }
+
   bool sendingRouteUpdateMessage = false;
   void onSendRouteUpdateMessage(lib.Route route) async {
     pp("$mm onSendRouteUpdateMessage .........");
@@ -202,6 +217,10 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     setState(() {
       sendingRouteUpdateMessage = false;
     });
+  }
+
+  void calculateDistances(lib.Route route) async {
+    routeDistanceCalculator.calculateRouteDistances(route.routeId!);
   }
 
   @override
@@ -244,6 +263,12 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                       selectedRoute = null;
                       _refresh(true);
                     },
+                    icon: const Icon(Icons.downloading)),
+                IconButton(
+                    onPressed: () async {
+                      pp('$mm updateAssociationRouteLandmarks routes in backend .......');
+                      updateAssociationRouteLandmarks();
+                    },
                     icon: const Icon(Icons.refresh)),
                 IconButton(
                     onPressed: () async {
@@ -281,7 +306,9 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                     onSendRouteUpdateMessage: (route) {
                                       onSendRouteUpdateMessage(route);
                                     },
-                                  );
+                                    onCalculateDistances: (r ) {
+                                      calculateDistances(r);
+                                    },                                  );
                                 },
                                 tablet: (ctx) {
                                   return OrientationLayoutBuilder(
@@ -304,7 +331,9 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                             onSendRouteUpdateMessage: (route) {
                                               onSendRouteUpdateMessage(route);
                                             },
-                                          ),
+                                            onCalculateDistances: (r ) {
+                                              calculateDistances(r);
+                                            },                                          ),
                                         ),
                                         const SizedBox(
                                           width: 32,
@@ -333,7 +362,9 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                             routes: routes,
                                             onSendRouteUpdateMessage: (route) {
                                               onSendRouteUpdateMessage(route);
-                                            },
+                                            }, onCalculateDistances: (r ) {
+                                            calculateDistances(r);
+                                          },
                                           ),
                                         ),
                                         const SizedBox(
@@ -432,13 +463,15 @@ class RouteList extends StatelessWidget {
       required this.navigateToCreatorMap,
       required this.routes,
       this.currentRoute,
-      required this.onSendRouteUpdateMessage})
+      required this.onSendRouteUpdateMessage, required this.onCalculateDistances})
       : super(key: key);
 
   final Function(lib.Route) navigateToMapViewer;
   final Function(lib.Route) navigateToLandmarks;
   final Function(lib.Route) navigateToCreatorMap;
   final Function(lib.Route) onSendRouteUpdateMessage;
+  final Function(lib.Route) onCalculateDistances;
+
 
   final List<lib.Route> routes;
   final lib.Route? currentRoute;
@@ -478,6 +511,17 @@ class RouteList extends StatelessWidget {
           navigateToCreatorMap(route);
         }));
 
+    list.add(FocusedMenuItem(
+        title: Text('Calculate Route Distances',
+            style: myTextStyleMediumBlack(context)),
+        // backgroundColor: Theme.of(context).primaryColor,
+        trailingIcon: Icon(
+          Icons.calculate,
+          color: Theme.of(context).primaryColor,
+        ),
+        onPressed: () {
+          onCalculateDistances(route);
+        }));
     list.add(FocusedMenuItem(
         title: Text('Send Route Update Message',
             style: myTextStyleMediumBlack(context)),

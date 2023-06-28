@@ -11,13 +11,10 @@ import 'package:kasie_transie_library/bloc/list_api_dog.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
 import 'package:kasie_transie_library/data/schemas.dart';
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
-import 'package:kasie_transie_library/utils/landmark_isolate.dart';
 import 'package:kasie_transie_library/utils/device_location_bloc.dart';
-import 'package:kasie_transie_library/utils/emojis.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/parsers.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
-import 'package:kasie_transie_route_builder/ui/route_detail_form.dart';
 import 'package:realm/realm.dart';
 
 import '../widgets/searching_cities_busy.dart';
@@ -98,7 +95,7 @@ class CityCreatorMapState extends ConsumerState<CityCreatorMap> {
       busy = false;
     });
   }
-
+  👌the hill is being climbed!
   lib.Country? country;
   Future _getStates() async {
     country = await prefs.getCountry();

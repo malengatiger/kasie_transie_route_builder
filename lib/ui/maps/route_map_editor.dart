@@ -60,7 +60,7 @@ class RouteMapEditorState extends State<RouteMapEditor>
         // icon: markerIcon,
         position: latLng,
         infoWindow:
-            InfoWindow(title: value.landmarkName, snippet: 'Route point'),
+            InfoWindow(title: value.routeName, snippet: 'Route point'),
         onTap: () {
           _onMarkerTapped();
         },

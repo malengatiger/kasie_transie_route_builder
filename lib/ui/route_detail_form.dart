@@ -232,7 +232,6 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
       userUrl: user!.thumbnailUrl,
       userName: user!.name,
       name: _nameController.value.text,
-      calculatedDistances: [],
     );
 
     try {

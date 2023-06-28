@@ -8,14 +8,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:kasie_transie_library/bloc/data_api_dog.dart';
 import 'package:kasie_transie_library/bloc/list_api_dog.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
-import 'package:kasie_transie_library/providers/kasie_providers.dart';
-import 'package:kasie_transie_library/utils/landmark_isolate.dart';
+import 'package:kasie_transie_library/isolates/landmark_isolate.dart';
 import 'package:kasie_transie_library/utils/device_location_bloc.dart';
 import 'package:kasie_transie_library/utils/emojis.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
-import 'package:kasie_transie_library/utils/parsers.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
-import 'package:realm/realm.dart';
 
 class LandmarkCreatorMap extends StatefulWidget {
   final lib.Route route;
@@ -367,6 +364,7 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
   }
 
   String? landmarkName;
+
   Future<void> _processNewLandmark() async {
     final parameters = LandmarkParameters(
         latitude: routePointForLandmark!.position!.coordinates.last,
@@ -374,7 +372,10 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
         routeId: widget.route.routeId!,
         radius: radius.toDouble(),
         landmarkName: landmarkName!,
-        limit: 15,
+        limit: 50,
+        index: landmarkIndex,
+        routePointId: routePointForLandmark!.routePointId!,
+        routePointIndex: routePointForLandmark!.index!,
         associationId: widget.route.associationId!,
         routeName: widget.route.name!,
         authToken: '');
