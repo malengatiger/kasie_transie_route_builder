@@ -12,7 +12,7 @@ class CityWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        SizedBox(width: 120, child: Text(title, style:
+        SizedBox(width: 100, child: Text(title, style:
         myTextStyleMediumLargeWithSize(context, 16),)),
         const SizedBox(
           width: 12,
@@ -21,8 +21,8 @@ class CityWidget extends StatelessWidget {
             ? const SizedBox()
             : Text(
           '${city!.name}',
-          style: myTextStyleMediumBoldWithColor(
-              context, Theme.of(context).primaryColor),
+          style: myTextStyleMediumLargeWithColor(
+              context, Theme.of(context).primaryColor, 15.0),
         )
       ],
     );

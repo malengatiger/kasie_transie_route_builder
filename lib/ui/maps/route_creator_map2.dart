@@ -16,25 +16,25 @@ import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:realm/realm.dart';
 
 ///Using a map, place each route point after another till the route is mapped
-class RouteCreatorMap extends StatefulWidget {
+class RouteCreatorMap2 extends StatefulWidget {
   final lib.Route route;
 
-  const RouteCreatorMap({
+  const RouteCreatorMap2({
     Key? key,
     required this.route,
   }) : super(key: key);
 
   @override
-  RouteCreatorMapState createState() => RouteCreatorMapState();
+  RouteCreatorMap2State createState() => RouteCreatorMap2State();
 }
 
-class RouteCreatorMapState extends State<RouteCreatorMap> {
+class RouteCreatorMap2State extends State<RouteCreatorMap2> {
   static const defaultZoom = 16.0;
   final Completer<GoogleMapController> _mapController = Completer();
 
   final CameraPosition _myCurrentCameraPosition =
       const CameraPosition(target: LatLng(-26.5, 27.6), zoom: 14.6);
-  static const mm = '💟💟💟💟💟💟💟💟💟💟 RouteCreatorMap: 💪 ';
+  static const mm = '💟💟💟💟💟💟💟💟💟💟 RouteCreatorMap2: 💪 ';
   final _key = GlobalKey<ScaffoldState>();
   bool busy = false;
   bool isHybrid = false;
@@ -161,37 +161,35 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
 
   Future<void> _buildExistingMarkers() async {
     await _makeDotMarker();
-    if (existingRoutePoints.isNotEmpty) {
-      for (var routePoint in existingRoutePoints) {
-        var latLng = LatLng(routePoint.position!.coordinates.last,
-            routePoint.position!.coordinates.first);
-        _markers.add(Marker(
-            markerId: MarkerId('${routePoint.routePointId}'),
-            icon: _dotMarker!,
-            onTap: () {
-              pp('$mm .............. ${E.pear}${E.pear}${E.pear} '
-                  'marker tapped: routePointId: ${routePoint.toJson()}');
-            },
-            infoWindow: InfoWindow(
-                title: 'RoutePoint ${routePointIndex + 1}',
-                snippet: "\nThis route point is part of the route. Tap to remove\n\n",
-                onTap: () {
-                  pp('$mm ............. infoWindow tapped: ${routePointIndex + 1}');
-                  _deleteRoutePoint(routePoint.routePointId!);
-                }),
-            position: LatLng(latLng.latitude, latLng.longitude)));
-      }
-      var last = existingRoutePoints.last;
-      final latLng = LatLng(
-          last.position!.coordinates.last, last.position!.coordinates.first);
-      totalPoints = existingRoutePoints.length;
-      routePointIndex = existingRoutePoints.length;
+    _addPolyLine();
+  }
 
-      _animateCamera(latLng, 16);
+  void _addPolyLine() {
+
+    pp('$mm .......... _addPolyLine ....... .');
+    _polyLines.clear();
+    var mPoints = <LatLng>[];
+    existingRoutePoints.sort((a, b) => a.index!.compareTo(b.index!));
+    for (var rp in existingRoutePoints) {
+      mPoints.add(LatLng(
+          rp.position!.coordinates.last, rp.position!.coordinates.first));
     }
-    setState(() {
-      busy = false;
-    });
+    var polyLine = Polyline(
+        color: Colors.grey[600]!,
+        width: 8,
+        points: mPoints,
+        polylineId: PolylineId(DateTime.now().toIso8601String()));
+
+    _polyLines.add(polyLine);
+    //
+    var last = existingRoutePoints.last;
+    final latLng = LatLng(
+        last.position!.coordinates.last, last.position!.coordinates.first);
+    totalPoints = existingRoutePoints.length;
+    routePointIndex = existingRoutePoints.length;
+
+    _animateCamera(latLng, 16);
+    setState(() {});
   }
 
   @override
@@ -266,22 +264,22 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
     }
 
     var id = Uuid.v4().toString();
-    _markers.add(Marker(
-        markerId: MarkerId(id),
-        icon: _dotMarker!,
-        onTap: () {
-          pp('$mm .............. marker tapped: $routePointIndex ${E.blueDot} '
-              'latLng: $latLng - routePointId: $id');
-        },
-        infoWindow: InfoWindow(
-            snippet: '\nThis point is part of the route. Tap to remove\n\n',
-            title: 'RoutePoint ${routePointIndex + 1}',
-            onTap: () {
-              pp('$mm ............. infoWindow tapped, point index: $routePointIndex'
-                  'latLng: $latLng - routePointId: $id ${E.redDot} DELETE!!');
-              _deleteRoutePoint(id);
-            }),
-        position: LatLng(latLng.latitude, latLng.longitude)));
+    // _markers.add(Marker(
+    //     markerId: MarkerId(id),
+    //     icon: _dotMarker!,
+    //     onTap: () {
+    //       pp('$mm .............. marker tapped: $routePointIndex ${E.blueDot} '
+    //           'latLng: $latLng - routePointId: $id');
+    //     },
+    //     infoWindow: InfoWindow(
+    //         snippet: '\nThis point is part of the route. Tap to remove\n\n',
+    //         title: 'RoutePoint ${routePointIndex + 1}',
+    //         onTap: () {
+    //           pp('$mm ............. infoWindow tapped, point index: $routePointIndex'
+    //               'latLng: $latLng - routePointId: $id ${E.redDot} DELETE!!');
+    //           _deleteRoutePoint(id);
+    //         }),
+    //     position: LatLng(latLng.latitude, latLng.longitude)));
 
     if (timer == null) {
       startTimer();
@@ -307,6 +305,9 @@ class RouteCreatorMapState extends State<RouteCreatorMap> {
 
     existingRoutePoints.add(routePoint);
     rpList.add(routePoint);
+
+    _addPolyLine();
+
     _animateCamera(latLng, defaultZoom + 6);
     setState(() {});
   }

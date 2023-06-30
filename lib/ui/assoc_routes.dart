@@ -12,6 +12,7 @@ import 'package:kasie_transie_library/messaging/fcm_bloc.dart';
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/emojis.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
+import 'package:kasie_transie_library/utils/initializer.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_route_builder/ui/maps/city_creator_map.dart';
@@ -23,6 +24,7 @@ import 'package:kasie_transie_route_builder/utils/route_distance_calculator.dart
 import 'package:responsive_builder/responsive_builder.dart';
 
 import 'maps/route_creator_map.dart';
+import 'maps/route_creator_map2.dart';
 import 'maps/route_map_viewer.dart';
 
 class AssociationRoutes extends ConsumerStatefulWidget {
@@ -47,6 +49,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   lib.User? user;
   final StreamController<String> _streamController =
       StreamController.broadcast();
+
   Stream<String> get routeIdStream => _streamController.stream;
   late StreamSubscription<String> routeChangesSub;
 
@@ -54,21 +57,23 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   void initState() {
     super.initState();
     _listen();
-    _getUser();
+    _getInitialData();
     initialize();
   }
 
   String? routeId;
+
   Future<void> initialize() async {
     fcmBloc.subscribeToTopics();
     routeChangesSub = fcmBloc.routeChangesStream.listen((event) {
       pp('$mm routeChangesStream delivered a routeId: $event');
       routeId = event;
-      setState(() {
-
-      });
+      setState(() {});
       if (mounted) {
-        showSnackBar(message: "A Route update has been issued. The download will happen automatically.", context: context);
+        showSnackBar(
+            message:
+                "A Route update has been issued. The download will happen automatically.",
+            context: context);
       }
     });
   }
@@ -83,13 +88,18 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     });
   }
 
-  void _getUser() async {
+  void _getInitialData() async {
     setState(() {
       busy = true;
     });
     try {
       user = await prefs.getUser();
-      _refresh(false);
+      selectedRoute = await prefs.getRoute();
+      if (selectedRoute != null) {
+        selectedRouteId = selectedRoute!.routeId!;
+      }
+      routes = await listApiDog
+          .getRoutes(AssociationParameter(user!.associationId!, false));
     } catch (e) {
       pp(e);
     }
@@ -106,10 +116,11 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     routeChangesSub.cancel();
     super.dispose();
   }
+
   void navigateToLandmarks(lib.Route route) async {
     pp('$mm navigateToLandmarksEditor .....  route: ${route.name}');
     tinyBloc.setRouteId(route.routeId!);
-
+    prefs.saveRoute(route);
     setState(() {
       selectedRoute = route;
       selectedRouteId = route.routeId;
@@ -129,6 +140,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   void navigateToMapViewer(lib.Route route) async {
     pp('$mm navigateToMapViewer .....  route: ${route.name}');
     tinyBloc.setRouteId(route.routeId!);
+    prefs.saveRoute(route);
 
     setState(() {
       selectedRoute = route;
@@ -142,7 +154,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
       //route = await listApiDog.
       navigateWithScale(
           RouteMapViewer(
-            route: route,
+            routeId: route.routeId!,
             onRouteUpdated: () {
               pp('\n\n$mm onRouteUpdated ... do something Boss!');
               _refresh(true);
@@ -155,6 +167,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   void navigateToCreatorMap(lib.Route route) async {
     pp('$mm navigateToCreatorMap .....  route: ${route.name}');
     tinyBloc.setRouteId(route.routeId!);
+    prefs.saveRoute(route);
     setState(() {
       selectedRoute = route;
       selectedRouteId = route.routeId;
@@ -165,7 +178,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
 
     if (mounted) {
       navigateWithScale(
-          RouteCreatorMap(
+          RouteCreatorMap2(
             route: route,
           ),
           context);
@@ -176,7 +189,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     setState(() {
       busy = true;
     });
-    await listApiDog
+    routes = await listApiDog
         .getRoutes(AssociationParameter(user!.associationId!, refresh));
     setState(() {
       busy = false;
@@ -188,15 +201,19 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     setState(() {
       busy = true;
     });
-      await dataApiDog.updateAssociationRouteLandmarks(user!.associationId!);
+    await dataApiDog.updateAssociationRouteLandmarks(user!.associationId!);
     setState(() {
       busy = false;
     });
   }
 
   bool sendingRouteUpdateMessage = false;
+
   void onSendRouteUpdateMessage(lib.Route route) async {
     pp("$mm onSendRouteUpdateMessage .........");
+    tinyBloc.setRouteId(route.routeId!);
+    prefs.saveRoute(route);
+
     setState(() {
       sendingRouteUpdateMessage = true;
     });
@@ -220,7 +237,11 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   }
 
   void calculateDistances(lib.Route route) async {
-    routeDistanceCalculator.calculateRouteDistances(route.routeId!);
+    tinyBloc.setRouteId(route.routeId!);
+    prefs.saveRoute(route);
+
+    routeDistanceCalculator.calculateRouteDistances(
+        route.routeId!, route.associationId!);
   }
 
   @override
@@ -230,174 +251,273 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
           routesProvider(AssociationParameter(user!.associationId!, false)));
       if (k.hasValue) {
         routes = k.value!;
-        pp('$mm routesProvider.ref delivered: ${routes.length}');
-      } else {
-        pp('$mm routesProvider has no value yet; ${E.redDot} delivered nothing');
       }
     }
     final width = MediaQuery.of(context).size.width;
     return SafeArea(
-        child: Scaffold(
-            appBar: AppBar(
-              title: Text(
-                'Taxi Routes',
-                style: myTextStyleLarge(context),
-              ),
-              bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(64),
-                  child: Column(
-                    children: [
-                      Text(
-                        widget.associationName,
-                        style: myTextStyleMediumBold(context),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Taxi Routes',
+            style: myTextStyleLarge(context),
+          ),
+          bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(64),
+              child: Column(
+                children: [
+                  Text(
+                    widget.associationName,
+                    style: myTextStyleMediumBold(context),
+                  ),
+                  const SizedBox(
+                    height: 16,
+                  )
+                ],
+              )),
+          actions: [
+            IconButton(
+                onPressed: () async {
+                  pp('$mm refresh routes from backend .......');
+                  selectedRoute = null;
+                  _refresh(true);
+                },
+                icon: const Icon(Icons.downloading)),
+            IconButton(
+                onPressed: () async {
+                  pp('$mm updateAssociationRouteLandmarks routes in backend .......');
+                  initializer.initialize();
+                },
+                icon: const Icon(Icons.refresh)),
+            IconButton(
+                onPressed: () async {
+                  pp('$mm navigate to city creator map .......');
+                  navigateWithFade(const CityCreatorMap(), context);
+                },
+                icon: const Icon(Icons.account_balance)),
+            IconButton(
+                onPressed: () {
+                  navigateWithScale(
+                      RouteDetailForm(dataApiDog: dataApiDog, prefs: prefs),
+                      context);
+                },
+                icon: const Icon(Icons.add)),
+          ],
+        ),
+        body: Stack(
+          children: [
+            StreamBuilder<List<lib.Route>>(
+                stream: listApiDog.routeStream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    routes = snapshot.data!;
+                  }
+                  return Stack(children: [
+                    routes.isEmpty
+                        ? const WaitingForGodot()
+                        : ScreenTypeLayout.builder(
+                            mobile: (ctx) {
+                              return RouteList(
+                                navigateToMapViewer: navigateToMapViewer,
+                                navigateToLandmarks: navigateToLandmarks,
+                                navigateToCreatorMap: navigateToCreatorMap,
+                                routes: routes,
+                                onSendRouteUpdateMessage: (route) {
+                                  onSendRouteUpdateMessage(route);
+                                },
+                                onCalculateDistances: (r) {
+                                  calculateDistances(r);
+                                },
+                              );
+                            },
+                            tablet: (ctx) {
+                              return OrientationLayoutBuilder(landscape: (ctx) {
+                                return Row(
+                                  children: [
+                                    const SizedBox(
+                                      width: 16,
+                                    ),
+                                    SizedBox(
+                                      width: (width / 2) - 60,
+                                      child: RouteList(
+                                        navigateToMapViewer:
+                                            navigateToMapViewer,
+                                        navigateToLandmarks:
+                                            navigateToLandmarks,
+                                        navigateToCreatorMap:
+                                            navigateToCreatorMap,
+                                        routes: routes,
+                                        onSendRouteUpdateMessage: (route) {
+                                          onSendRouteUpdateMessage(route);
+                                        },
+                                        onCalculateDistances: (r) {
+                                          calculateDistances(r);
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 32,
+                                    ),
+                                    SizedBox(
+                                      width: (width / 2),
+                                      child: RouteInfoWidget(
+                                        routeId: selectedRouteId,
+                                        routeName: selectedRoute == null
+                                            ? null
+                                            : selectedRoute!.name,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }, portrait: (ctx) {
+                                return Row(
+                                  children: [
+                                    SizedBox(
+                                      width: (width / 2) - 24,
+                                      child: RouteList(
+                                        navigateToMapViewer:
+                                            navigateToMapViewer,
+                                        navigateToLandmarks:
+                                            navigateToLandmarks,
+                                        navigateToCreatorMap:
+                                            navigateToCreatorMap,
+                                        currentRoute: selectedRoute,
+                                        routes: routes,
+                                        onSendRouteUpdateMessage: (route) {
+                                          onSendRouteUpdateMessage(route);
+                                        },
+                                        onCalculateDistances: (r) {
+                                          calculateDistances(r);
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 8,
+                                    ),
+                                    SizedBox(
+                                      width: (width / 2),
+                                      child: RouteInfoWidget(
+                                        routeId: selectedRouteId,
+                                        routeName: selectedRoute == null
+                                            ? null
+                                            : selectedRoute!.name,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              });
+                            },
+                          )
+                  ]);
+                }),
+            busy
+                ? const Positioned(
+                    child: Center(
+                    child: SizedBox(
+                      height: 32,
+                      width: 32,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 8,
+                        backgroundColor: Colors.amber,
                       ),
-                      const SizedBox(
-                        height: 16,
-                      )
-                    ],
-                  )),
-              actions: [
-                IconButton(
-                    onPressed: () async {
-                      pp('$mm refresh routes from backend .......');
-                      selectedRoute = null;
-                      _refresh(true);
-                    },
-                    icon: const Icon(Icons.downloading)),
-                IconButton(
-                    onPressed: () async {
-                      pp('$mm updateAssociationRouteLandmarks routes in backend .......');
-                      updateAssociationRouteLandmarks();
-                    },
-                    icon: const Icon(Icons.refresh)),
-                IconButton(
-                    onPressed: () async {
-                      pp('$mm navigate to city creator map .......');
-                      navigateWithFade(const CityCreatorMap(), context);
-                    },
-                    icon: const Icon(Icons.account_balance)),
-                IconButton(
-                    onPressed: () {
-                      navigateWithScale(
-                          RouteDetailForm(dataApiDog: dataApiDog, prefs: prefs),
-                          context);
-                    },
-                    icon: const Icon(Icons.add)),
+                    ),
+                  ))
+                : const SizedBox(),
+          ],
+        ),
+        drawer: SizedBox(
+          width: 400,
+          child: Drawer(
+            child: ListView(
+              children: [
+                DrawerHeader(
+                    decoration: const BoxDecoration(
+                      color: Colors.black12,
+                      image: DecorationImage(
+                          image: AssetImage('assets/gio.png'), scale: .5),
+                    ),
+                    child: SizedBox(
+                        height: 60,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text('Routes Menu',
+                                style: myTextStyleMediumLargeWithColor(
+                                    context, Colors.grey, 32)),
+                            const SizedBox(
+                              height: 48,
+                            )
+                          ],
+                        ))),
+                const SizedBox(
+                  height: 64,
+                ),
+                ListTile(
+                  title: const Text('Add Place/Town/City'),
+                  leading: Icon(
+                    Icons.account_balance,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  subtitle: Text(
+                      'Create a new place that wil be used in your routes',
+                      style: myTextStyleSmall(context)),
+                  onTap: () {
+                    pp('$mm navigate to city creator map .......');
+                    navigateWithFade(const CityCreatorMap(), context);
+                  },
+                ),
+                const SizedBox(
+                  height: 32,
+                ),
+                ListTile(
+                  title: const Text('Add New Route'),
+                  leading: Icon(Icons.directions_bus,
+                      color: Theme.of(context).primaryColor),
+                  subtitle: Text('Create a new route',
+                      style: myTextStyleSmall(context)),
+                  onTap: () {
+                    navigateWithScale(
+                        RouteDetailForm(dataApiDog: dataApiDog, prefs: prefs),
+                        context);
+                  },
+                ),
+                const SizedBox(
+                  height: 32,
+                ),
+                ListTile(
+                  title: const Text('Calculate Route Distances'),
+                  leading: Icon(Icons.calculate,
+                      color: Theme.of(context).primaryColor),
+                  subtitle: Text(
+                    'Calculate distances between landmarks in the route',
+                    style: myTextStyleSmall(context),
+                  ),
+                  onTap: () {
+                    pp('$mm starting distance calculation ...');
+                    routeDistanceCalculator
+                        .calculateAssociationRouteDistances();
+                  },
+                ),
+                const SizedBox(
+                  height: 32,
+                ),
+                ListTile(
+                  title: const Text('Refresh Route Data'),
+                  leading: Icon(Icons.refresh,
+                      color: Theme.of(context).primaryColor),
+                  subtitle: Text(
+                    'Fetch refreshed route data from the Mother Ship',
+                    style: myTextStyleSmall(context),
+                  ),
+                  onTap: () {
+                    _refresh(true);
+                  },
+                ),
               ],
             ),
-            body: Stack(
-              children: [
-                StreamBuilder<List<lib.Route>>(
-                    stream: listApiDog.routeStream,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        routes = snapshot.data!;
-                      }
-                      return Stack(children: [
-                        routes.isEmpty
-                            ? const WaitingForGodot()
-                            : ScreenTypeLayout.builder(
-                                mobile: (ctx) {
-                                  return RouteList(
-                                    navigateToMapViewer: navigateToMapViewer,
-                                    navigateToLandmarks: navigateToLandmarks,
-                                    navigateToCreatorMap: navigateToCreatorMap,
-                                    routes: routes,
-                                    onSendRouteUpdateMessage: (route) {
-                                      onSendRouteUpdateMessage(route);
-                                    },
-                                    onCalculateDistances: (r ) {
-                                      calculateDistances(r);
-                                    },                                  );
-                                },
-                                tablet: (ctx) {
-                                  return OrientationLayoutBuilder(
-                                      landscape: (ctx) {
-                                    return Row(
-                                      children: [
-                                        const SizedBox(
-                                          width: 16,
-                                        ),
-                                        SizedBox(
-                                          width: (width / 2) - 60,
-                                          child: RouteList(
-                                            navigateToMapViewer:
-                                                navigateToMapViewer,
-                                            navigateToLandmarks:
-                                                navigateToLandmarks,
-                                            navigateToCreatorMap:
-                                                navigateToCreatorMap,
-                                            routes: routes,
-                                            onSendRouteUpdateMessage: (route) {
-                                              onSendRouteUpdateMessage(route);
-                                            },
-                                            onCalculateDistances: (r ) {
-                                              calculateDistances(r);
-                                            },                                          ),
-                                        ),
-                                        const SizedBox(
-                                          width: 32,
-                                        ),
-                                        SizedBox(
-                                          width: (width / 2),
-                                          child: RouteInfoWidget(
-                                            routeId: selectedRouteId,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  }, portrait: (ctx) {
-                                    return Row(
-                                      children: [
-                                        SizedBox(
-                                          width: (width / 2) - 24,
-                                          child: RouteList(
-                                            navigateToMapViewer:
-                                                navigateToMapViewer,
-                                            navigateToLandmarks:
-                                                navigateToLandmarks,
-                                            navigateToCreatorMap:
-                                                navigateToCreatorMap,
-                                            currentRoute: selectedRoute,
-                                            routes: routes,
-                                            onSendRouteUpdateMessage: (route) {
-                                              onSendRouteUpdateMessage(route);
-                                            }, onCalculateDistances: (r ) {
-                                            calculateDistances(r);
-                                          },
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          width: 8,
-                                        ),
-                                        SizedBox(
-                                          width: (width / 2),
-                                          child: RouteInfoWidget(
-                                            routeId: selectedRouteId,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  });
-                                },
-                              )
-                      ]);
-                    }),
-                busy
-                    ? const Positioned(
-                        child: Center(
-                        child: SizedBox(
-                          height: 32,
-                          width: 32,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 8,
-                            backgroundColor: Colors.amber,
-                          ),
-                        ),
-                      ))
-                    : const SizedBox(),
-              ],
-            )));
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -463,7 +583,8 @@ class RouteList extends StatelessWidget {
       required this.navigateToCreatorMap,
       required this.routes,
       this.currentRoute,
-      required this.onSendRouteUpdateMessage, required this.onCalculateDistances})
+      required this.onSendRouteUpdateMessage,
+      required this.onCalculateDistances})
       : super(key: key);
 
   final Function(lib.Route) navigateToMapViewer;
@@ -471,7 +592,6 @@ class RouteList extends StatelessWidget {
   final Function(lib.Route) navigateToCreatorMap;
   final Function(lib.Route) onSendRouteUpdateMessage;
   final Function(lib.Route) onCalculateDistances;
-
 
   final List<lib.Route> routes;
   final lib.Route? currentRoute;
@@ -527,7 +647,7 @@ class RouteList extends StatelessWidget {
             style: myTextStyleMediumBlack(context)),
         // backgroundColor: Theme.of(context).primaryColor,
         trailingIcon: Icon(
-          Icons.edit,
+          Icons.send,
           color: Theme.of(context).primaryColor,
         ),
         onPressed: () {

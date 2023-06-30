@@ -17,12 +17,11 @@ import 'package:kasie_transie_route_builder/ui/maps/route_creator_map.dart';
 import '../widgets/color_pad.dart';
 
 class RouteMapViewer extends StatefulWidget {
-  final lib.Route route;
+  final String routeId;
   final Function onRouteUpdated;
   const RouteMapViewer({
     Key? key,
-    required this.route,
-    required this.onRouteUpdated,
+    required this.onRouteUpdated, required this.routeId,
   }) : super(key: key);
 
   @override
@@ -43,24 +42,39 @@ class RouteMapViewerState extends State<RouteMapViewer> {
   final Set<Marker> _markers = HashSet();
   final Set<Circle> _circles = HashSet();
   final Set<Polyline> _polyLines = {};
-  BitmapDescriptor? _dotMarker;
-  // List<BitmapDescriptor> _numberMarkers = [];
   final List<lib.RoutePoint> rpList = [];
   List<lib.RoutePoint> existingRoutePoints = [];
-  // List<lib.Landmark> _landmarks = [];
 
   List<poly.PointLatLng>? polylinePoints;
   Color color = Colors.black;
   var routeLandmarks = <lib.RouteLandmark>[];
   int landmarkIndex = 0;
-
+  lib.Route? route;
   @override
   void initState() {
     super.initState();
     _buildLandmarkIcons();
     _getCurrentLocation();
     _getUser();
-    color = getColor(widget.route.color!);
+  }
+
+  Future _getRoute() async {
+    setState(() {
+      busy = true;
+    });
+    try {
+      route = await listApiDog.getRoute(widget.routeId);
+      if (route == null) {
+            throw Exception('Route not afraid');
+          }
+      color = getColor(route!.color!);
+      _zoomToStartCity();
+    } catch (e) {
+      pp(e);
+    }
+    setState(() {
+      busy = false;
+    });
   }
 
   @override
@@ -71,7 +85,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
   Color newColor = Colors.black;
   String? stringColor;
 
-  void updateRouteColor() async {
+  void changeRouteColorOnBackend() async {
     pp('$mm ... updateRouteColor ...color: $stringColor');
     color = newColor;
     _addPolyLine();
@@ -80,9 +94,9 @@ class RouteMapViewerState extends State<RouteMapViewer> {
 
     try {
       final m = await dataApiDog.updateRouteColor(
-          routeId: widget.route.routeId!, color: stringColor!);
+          routeId: widget.routeId!, color: stringColor!);
       pp('$mm ... color has been updated ... result: $m ; 0 is good!');
-      //widget.onRouteUpdated();
+      _getRoute();
     } catch (e) {
       pp(e);
     }
@@ -129,8 +143,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                       stringColor = string;
                     });
                     Navigator.pop(context);
-                    pp('$mm ....... 🍎🍎🍎🍎🍎🍎 onColorPicked start update ... $stringColor');
-                    updateRouteColor();
+                    _updateRouteColor();
                   },
                 ),
               ],
@@ -139,10 +152,15 @@ class RouteMapViewerState extends State<RouteMapViewer> {
         });
   }
 
+  void _updateRouteColor() {
+    pp('$mm ....... 🍎🍎🍎🍎🍎🍎 onColorPicked start update ... $stringColor');
+    changeRouteColorOnBackend();
+  }
+
   Future _getRouteLandmarks() async {
     routeLandmarks =
-        await listApiDog.getRouteLandmarks(widget.route.routeId!, true);
-    pp('$mm _getRouteLandmarks ...  route: ${widget.route.name}; found: ${routeLandmarks.length} ');
+        await listApiDog.getRouteLandmarks(widget.routeId!, true);
+    pp('$mm _getRouteLandmarks ...  route: ${widget.routeId}; found: ${routeLandmarks.length} ');
 
     landmarkIndex = 0;
     for (var landmark in routeLandmarks) {
@@ -157,7 +175,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
           },
           infoWindow: InfoWindow(
               snippet:
-                  '\nThis landmark is part of the route:\n ${widget.route.name}\n\n',
+                  '\nThis landmark is part of the route:\n ${route!.name}\n\n',
               title: '🍎 ${landmark.landmarkName}',
               onTap: () {
                 pp('$mm ............. infoWindow tapped, point index: $index');
@@ -197,7 +215,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                   onPressed: () {
                     _popOut();
                     navigateWithScale(
-                        RouteCreatorMap(route: widget.route), context);
+                        RouteCreatorMap(route: route!), context);
                   },
                   child: const Text('Yes')),
             ],
@@ -219,7 +237,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
       _user = await prefs.getUser();
       pp('$mm getting existing RoutePoints .......');
       existingRoutePoints =
-          await listApiDog.getRoutePoints(widget.route.routeId!, refresh);
+          await listApiDog.getRoutePoints(widget.routeId, refresh);
 
       pp('$mm .......... existingRoutePoints ....  🍎 found: '
           '${existingRoutePoints.length} points');
@@ -257,7 +275,6 @@ class RouteMapViewerState extends State<RouteMapViewer> {
 
   Future _makeDotMarker() async {
     var intList = await getBytesFromAsset("assets/markers/dot2.png", 40);
-    _dotMarker = BitmapDescriptor.fromBytes(intList);
     pp('$mm custom marker 💜 assets/markers/dot2.png created');
   }
 
@@ -274,10 +291,13 @@ class RouteMapViewerState extends State<RouteMapViewer> {
   }
 
   Future<void> _zoomToStartCity() async {
-    if (widget.route.routeStartEnd != null) {
+    if (route == null) {
+      return;
+    }
+    if (route!.routeStartEnd != null) {
       final latLng = LatLng(
-          widget.route.routeStartEnd!.startCityPosition!.coordinates.last,
-          widget.route.routeStartEnd!.startCityPosition!.coordinates.first);
+          route!.routeStartEnd!.startCityPosition!.coordinates.last,
+          route!.routeStartEnd!.startCityPosition!.coordinates.first);
       var cameraPos = CameraPosition(target: latLng, zoom: 11.0);
       final GoogleMapController controller = await _mapController.future;
       controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
@@ -345,7 +365,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                   },
                   onMapCreated: (GoogleMapController controller) async {
                     _mapController.complete(controller);
-                    _zoomToStartCity();
+                    await _getRoute();
                     await _getRoutePoints(false);
                     _getRouteLandmarks();
                   },
@@ -376,7 +396,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                         onTap: () {
                           Navigator.pop(context);
                         },
-                        child: Card(
+                        child: route == null? const SizedBox() : Card(
                           color: Colors.black26,
                           elevation: 24,
                           child: Padding(
@@ -391,7 +411,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                                   Text(
                                     'Route Viewer',
                                     style: myTextStyleMediumLargeWithColor(
-                                        context, Colors.white),
+                                        context, Colors.white, 24),
                                   ),
                                   Row(
                                     children: [
@@ -406,7 +426,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
                                         child: Text(
-                                          '${widget.route.name}',
+                                          '${route!.name}',
                                           style: myTextStyleMediumWithColor(
                                               context, Colors.white),
                                         ),
@@ -414,7 +434,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
                                     ],
                                   ),
                                   Text(
-                                    '${widget.route.associationName}',
+                                    '${route!.associationName}',
                                     style: myTextStyleTiny(context),
                                   )
                                 ],

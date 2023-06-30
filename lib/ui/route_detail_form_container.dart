@@ -185,6 +185,8 @@ class RouteDetailFormContainer extends StatelessWidget {
                               SizedBox(width: 420,
                                 child: TextFormField(
                                   controller: nameController,
+                                  style: myTextStyleSmall(context),
+                                  enabled: false,
                                   validator: (value) {
                                     if (value!.isEmpty) {
                                       return 'Please enter name of the taxi Route';
@@ -194,6 +196,7 @@ class RouteDetailFormContainer extends StatelessWidget {
                                   decoration: const InputDecoration(
                                     labelText: 'Route Name',
                                     hintText: 'Enter Route Name',
+                                    
                                   ),
                                 ),
                               ),
@@ -236,24 +239,24 @@ class RouteDetailFormContainer extends StatelessWidget {
                                   },
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(
-                                        horizontal: 40.0, vertical: 20),
+                                        horizontal: 20.0, vertical: 20),
                                     child: Text('Save Route'),
                                   )),
                               const SizedBox(
                                 height: 48,
                               ),
-                              ElevatedButton(
-                                  onPressed: () {
-                                    onSendRouteUpdateMessage();
-                                  },
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 40.0, vertical: 20),
-                                    child: Text('Send Route Update Message'),
-                                  )),
-                              const SizedBox(
-                                height: 60,
-                              ),
+                              // ElevatedButton(
+                              //     onPressed: () {
+                              //       onSendRouteUpdateMessage();
+                              //     },
+                              //     child: const Padding(
+                              //       padding: EdgeInsets.symmetric(
+                              //           horizontal: 20.0, vertical: 20),
+                              //       child: Text('Send Route Update Message'),
+                              //     )),
+                              // const SizedBox(
+                              //   height: 60,
+                              // ),
                             ],
                           ),
                         ),

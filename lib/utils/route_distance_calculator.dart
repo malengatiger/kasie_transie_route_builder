@@ -2,7 +2,9 @@ import 'dart:core';
 import 'dart:core' as prefix0;
 
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:kasie_transie_library/bloc/data_api_dog.dart';
 import 'package:kasie_transie_library/bloc/list_api_dog.dart';
+import 'package:kasie_transie_library/data/calculated_distance_list.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/emojis.dart';
@@ -13,90 +15,123 @@ import 'package:realm/realm.dart';
 
 import 'distance.dart';
 
-final RouteDistanceCalculator routeDistanceCalculator = RouteDistanceCalculator();
-class RouteDistanceCalculator {
+final RouteDistanceCalculator routeDistanceCalculator =
+    RouteDistanceCalculator();
 
+class RouteDistanceCalculator {
   static const mm = '🌸🌸🌸🌸 RouteDistanceCalculator: 🌸🌸🌸';
 
-   Future calculateAssociationRouteDistances() async {
+  Future calculateAssociationRouteDistances() async {
+    pp('... starting ... calculateAssociationRouteDistances ...');
     final user = await prefs.getUser();
-    final routes = await listApiDog.getRoutes(AssociationParameter(user!.associationId!, false));
+    final routes = await listApiDog
+        .getRoutes(AssociationParameter(user!.associationId!, false));
     final distances = <lib.CalculatedDistance>[];
     for (var value in routes) {
-      distances.addAll(await calculateRouteDistances(value.routeId!));
+      final list =
+          (await calculateRouteDistances(value.routeId!, user.associationId!));
+      distances.addAll(list);
+      pp('... added ${list.length} route distances for route: ${value.name} ...');
+    }
+    //print
+    int cnt = 1;
+    pp('\n\n$mm ROUTE DISTANCES CALCULATED .............');
+    for (var d in distances) {
+      pp('$mm #$cnt route distance: ');
+      myPrettyJsonPrint(d.toJson());
+      cnt++;
     }
   }
 
-   Future<List<lib.CalculatedDistance>> calculateRouteDistances(
-      String routeId) async {
+  Future<List<lib.CalculatedDistance>> calculateRouteDistances(
+      String routeId, String associationId) async {
     pp('$mm ... starting calculateRouteDistances for $routeId');
+
     final routeLandmarks = await listApiDog.getRouteLandmarks(routeId, false);
+    if (routeLandmarks.isEmpty) {
+      pp('$mm ... 1. stopping calculateRouteDistances for $routeId, no routeLandmarks');
+      return [];
+    }
+
     final routePoints = await listApiDog.getRoutePoints(routeId, false);
+    if (routePoints.isEmpty) {
+      pp('$mm ... 2. stopping calculateRouteDistances for $routeId, routePoints');
+      return [];
+    }
+
     //
-    pp('$mm ... calculateRouteDistances for ${routeLandmarks.length} routeLandmarks');
+    pp('\n\n$mm ... calculateRouteDistances for ${routeLandmarks.length} routeLandmarks');
     pp('$mm ... calculateRouteDistances for ${routePoints.length} points');
 
-    if (routePoints.isEmpty) {
-      pp('$mm ... 1. stopping calculateRouteDistances for $routeId');
-
-      return [];
-    }
+    //
     routePoints.sort((a, b) => a.index!.compareTo(b.index!));
-
-    if (routeLandmarks.isEmpty) {
-      pp('$mm ... 2. stopping calculateRouteDistances for $routeId');
-      return [];
-    }
     final distances = <lib.CalculatedDistance>[];
     lib.RouteLandmark? prevRouteLandmark;
     int index = 0;
     double mDistance = 0;
+    //
     for (var routeLandmark in routeLandmarks) {
       if (index == 0) {
         prevRouteLandmark = routeLandmark;
+        index++;
       } else {
         final dist = await _calculateDistanceBetween(
-            fromLandmark: prevRouteLandmark!, toLandmark: routeLandmark, routePoints: routePoints);
+            fromLandmark: prevRouteLandmark!,
+            toLandmark: routeLandmark,
+            routePoints: routePoints);
         mDistance += dist;
-        final m = lib.CalculatedDistance(ObjectId(),
+        final m = lib.CalculatedDistance(
+          ObjectId(),
           distanceInMetres: dist,
           routeId: routeId,
           index: index - 1,
+          associationId: associationId,
           routeName: routeLandmark.routeName,
           fromLandmark: prevRouteLandmark.landmarkName,
-          fromRoutePointIndex: prevRouteLandmark.index,
+          fromRoutePointIndex: prevRouteLandmark.routePointIndex,
           distanceFromStart: mDistance,
           fromLandmarkId: prevRouteLandmark.landmarkId,
           toLandmark: routeLandmark.landmarkName,
           toLandmarkId: routeLandmark.landmarkId,
-          toRoutePointIndex: routeLandmark.index,
+          toRoutePointIndex: routeLandmark.routePointIndex,
         );
         distances.add(m);
         prevRouteLandmark = routeLandmark;
         index++;
       }
     }
-    pp('$mm update the route with total distance: $mDistance metres');
+    pp('\n\n$mm update the route with total distance: $mDistance metres');
     pp('$mm update the route with distances between landmarks: ${distances.length}');
     pp('$mm route: ${routeLandmarks.first.routeName}');
 
-    for (var value1 in distances) {
-      pp('$mm calculated distance: ${value1.distanceInMetres} - ${value1.distanceFromStart}'
-          ' ${E.appleRed} ${value1.fromLandmark} - ${value1.toLandmark}');
+    for (var calcDistance in distances) {
+      pp('$mm calculated distance: ${calcDistance.distanceInMetres} '
+          '${E.pear} distanceFromStart: ${calcDistance.distanceFromStart}'
+          ' ${E.appleRed} ${calcDistance.fromLandmark} - ${calcDistance.toLandmark}');
     }
+    await dataApiDog.addCalculatedDistances(CalculatedDistanceList(distances));
     return distances;
   }
 
-   Future<double> _calculateDistanceBetween(
+  Future<double> _calculateDistanceBetween(
       {required lib.RouteLandmark fromLandmark,
       required lib.RouteLandmark toLandmark,
       required List<lib.RoutePoint> routePoints}) async {
-     pp('$mm ... _calculateDistanceBetween ${fromLandmark.landmarkName} and ${toLandmark.landmarkName}');
+    pp('$mm ... _calculateDistanceBetween ${fromLandmark.landmarkName} ${E.heartBlue} index: ${fromLandmark.routePointIndex} '
+        'and ${toLandmark.landmarkName}  ${E.heartBlue} index: ${toLandmark.routePointIndex}');
 
-     var range = routePoints.getRange(fromLandmark.index!, toLandmark.index!);
-     pp('$mm ... range of points: ${range.length}');
+    Iterable<lib.RoutePoint> range = [];
+    try {
+      range = routePoints.getRange(
+          fromLandmark.routePointIndex!, toLandmark.routePointIndex!);
+      pp('$mm ... range of points between: ${range.length}');
+    } catch (e) {
+      range = routePoints.getRange(
+          fromLandmark.routePointIndex!, routePoints.length - 1);
+      pp(e);
+    }
 
-     lib.RoutePoint? prevPoint;
+    lib.RoutePoint? prevPoint;
     double mDistance = 0.0;
     for (var pointBetween in range) {
       if (prevPoint == null) {
@@ -107,16 +142,17 @@ class RouteDistanceCalculator {
             prevPoint.longitude!,
             pointBetween.latitude!,
             pointBetween.longitude!);
+        distance = distance.roundToDouble();
         mDistance += distance;
         prevPoint = pointBetween;
       }
     }
-     pp('$mm ... returning calculate Distance for the pair: $mDistance metres');
+    pp('$mm ... returning calculate Distance for the pair: $mDistance metres');
 
-     return mDistance;
+    return mDistance;
   }
 
-   Future<List<RoutePointDistance>> calculateFromLocation(
+  Future<List<RoutePointDistance>> calculateFromLocation(
       {required double latitude,
       required double longitude,
       required lib.Route route}) async {
@@ -128,27 +164,23 @@ class RouteDistanceCalculator {
     // Geolocator geoLocator = Geolocator();
 
     var index = 0;
-    routePoints.forEach((point) async {
+
+    for (var point in routePoints) {
       var dist = geo.GeolocatorPlatform.instance.distanceBetween(
           latitude, longitude, point.latitude!, point.longitude!);
       point.index = index;
       rpdList.add(
           RoutePointDistance(index: index, routePoint: point, distance: dist));
       index++;
-    });
+    }
+
     pp('...... Distances calculated from each route point to this location:  💙 ${rpdList.length}  💙');
     rpdList.sort((a, b) => a.distance.compareTo(b.distance));
     List<RoutePointDistance> marks = [];
-    for (var rpd in rpdList) {
-      // if (rpd.routePoint.landmarkId != null) {
-      //   marks.add(rpd);
-      //   pp('✳️  ✳️ RoutePointDistance that is a Landmark: ${rpd.routePoint.routeName}  🔆 distance: ${rpd.distance} metres');
-      // }
-    }
+
     if (marks.isEmpty) {}
     var nearestRoutePoint = rpdList.first;
-    pp(
-        '🚨 nearestRoutePoint: ${nearestRoutePoint.distance} metres 🍎 index: ${nearestRoutePoint.routePoint.index}');
+    pp('🚨 nearestRoutePoint: ${nearestRoutePoint.distance} metres 🍎 index: ${nearestRoutePoint.routePoint.index}');
 
     pp('💛💛💛💛 ${marks.length} dynamic distances calculated');
 
@@ -208,31 +240,31 @@ class RoutePointDistance {
       {required this.index, required this.routePoint, required this.distance});
 }
 
-class CalculatedDistanceList {
-  List<lib.CalculatedDistance>? distances;
-
-  CalculatedDistanceList(this.distances);
-
-  CalculatedDistanceList.fromJson(Map data) {
-    List<dynamic> list = data['distances'];
-    distances = [];
-    for (var m in list) {
-      var d = buildCalculatedDistance(m);
-      distances!.add(d);
-    }
-  }
-
-  Map<String, dynamic> toJson() {
-    List<Map<String, dynamic>> listOfMaps = [];
-    if (distances != null) {
-      for (var ass in distances!) {
-        var cMap = ass.toJson();
-        listOfMaps.add(cMap);
-      }
-    }
-    var map = {
-      'distances': listOfMaps,
-    };
-    return map;
-  }
-}
+// class CalculatedDistanceList {
+//   List<lib.CalculatedDistance>? distances;
+//
+//   CalculatedDistanceList(this.distances);
+//
+//   CalculatedDistanceList.fromJson(Map data) {
+//     List<dynamic> list = data['distances'];
+//     distances = [];
+//     for (var m in list) {
+//       var d = buildCalculatedDistance(m);
+//       distances!.add(d);
+//     }
+//   }
+//
+//   Map<String, dynamic> toJson() {
+//     List<Map<String, dynamic>> listOfMaps = [];
+//     if (distances != null) {
+//       for (var ass in distances!) {
+//         var cMap = ass.toJson();
+//         listOfMaps.add(cMap);
+//       }
+//     }
+//     var map = {
+//       'distances': listOfMaps,
+//     };
+//     return map;
+//   }
+// }

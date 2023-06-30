@@ -227,16 +227,12 @@ G
 linux/my_application.cc,9/9/995c5ee66ec6a6d46ba2668734a5503c7d0cdf32
 J
 lib/intro/kasie_intro.dart,8/2/82f248876dbd4c1eae928a0af1a06ab11db3b739
-O
-lib/ui/widgets/city_widget.dart,5/2/52b48125290257b080c1538e83203e89e8e448d7
 P
  lib/ui/widgets/color_picker.dart,7/e/7eb0d306c2604ec9de16b2c2c3c14e39fcdbf9e3
 Y
 )lib/ui/widgets/searching_cities_busy.dart,d/5/d5b0088125e0c046a4b8257f01477b096edba8a8
 ^
 .android/app/src/main/res/drawable/app_icon.xml,4/1/41be73f05525cc44d6c6cf9f8c491ad0a1dae296
-J
-lib/intro/splash_page.dart,5/1/519c5669eb9f9000279cb6abe40f1287040a0798
 Q
 !.idea/libraries/Dart_Packages.xml,f/c/fc67c2d2441e33af1dbd1e910281523d1ce74b4a
 ^
@@ -245,16 +241,10 @@ W
 'windows/flutter/generated_plugins.cmake,8/8/88ca6865187a33a9504c7309c5e20c833b7b0094
 @
 ios/Podfile.lock,6/f/6fc5efc9eba1a38c53e9a557a6ebda2b662185e1
-W
-'lib/ui/route_detail_form_container.dart,d/b/db54982d7996660321c1e83ee812694413183740
 V
 &lib/ui/widgets/route_list_minimum.dart,5/b/5b7d7eda01a46aa306403ba9c998f47a7c1744ae
-M
-lib/ui/route_info_widget.dart,3/7/37eaf581ca4ba2c92cd5610b0526f96e499d94fe
 H
 lib/ui/landing_page.dart,1/e/1e9c69a1cf5510467046222883bb0a3b57b4cb0a
-E
-lib/ui/tiny_bloc.dart,7/5/75fb9ade8cc038b694c16e8819fdaaf0275175dd
 O
 kasie_transie_route_builder.iml,7/a/7a4b0ad485bf3863eb11f964b3d18cb9cdd6226c
 S
