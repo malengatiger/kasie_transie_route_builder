@@ -11,42 +11,10 @@ M
 lib/intro/intro_page_one.dart,4/6/464c2440c935f8ad7fe225cee4b37dbc68b30b09
 X
 (lib/intro/empty_dashboard_container.dart,c/0/c0ca38e9488f362f8321ed5e691018955041801b
-C
-assets/l10n/af.json,d/5/d561064bc56d00f90fac4be2dd98ed7db721b097
-C
-assets/l10n/ig.json,5/1/514543ad786343e1fd97dbb0c8463a8e4c489113
-C
-assets/l10n/pt.json,f/5/f57be9274a6ec6729aaaa2120252ab59a8b0c284
-C
-assets/l10n/sn.json,8/2/8266210c51ac2d52788c3b938c18d4c75e9e21f6
-C
-assets/l10n/st.json,1/9/19cbced6cd2b02266f6cd706a9cdede23245ee37
-C
-assets/l10n/de.json,8/a/8adabfc11fe9b5afd66c0fda54313d697a3de534
-C
-assets/l10n/en.json,4/7/47319f07263f966871a92d84f602f574518e627e
-C
-assets/l10n/es.json,0/c/0c2aeee561efc293de02d8529db50e7b1302940a
-C
-assets/l10n/fr.json,3/f/3f3cc9d6e518ea5d7315bb268ce2d414d4930d1e
-C
-assets/l10n/zh.json,b/b/bbbd2362079a12e2e76383bfa212b9f2fa37ddfc
-C
-assets/l10n/zu.json,4/5/4596336cde542d8cb41696b323907b3743cd3e14
-I
-lib/generated/assets.dart,5/b/5b815209f3ac1d4b94a4211dbfb903428d4ed1c2
 G
 assets/files/people.csv,0/0/00d79e0e826397b2e114a1189d6848b9dda3fd65
 B
 assets/intl_en.arb,9/1/9119b1dcb10f1597aedefbf6d7588e2cc0924485
-C
-assets/l10n/sw.json,a/6/a63599a388ef23697d38c57e0359bf3f9e26e513
-C
-assets/l10n/ts.json,6/5/65a8c37e4896a4092c4c5167fb6fab7e66e282fa
-C
-assets/l10n/xh.json,e/8/e871bef75879ad0435c5e1a98d7d42adcd5bb2b0
-C
-assets/l10n/yo.json,e/6/e64ef3724d6c979b2843ce258997924035a178b7
 H
 assets/files/people.json,2/6/269cbb9a0f278b6a1ae99db402d681b91ddb04d1
 P
@@ -117,8 +85,6 @@ i
 9ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md,2/8/2827061f3dd0dda2368a5d4d6c7b7ec9426542a8
 m
 =ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json,3/5/35955066bdc626b9cb83bd17a0a128a38e180b18
-k
-;ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme,4/1/415f525025d2a854fce8d86570ada9443c42c5a6
 R
 "ios/Flutter/AppFrameworkInfo.plist,d/c/dcf6bab66022807af0d3467afc4bc1c2594538c4
 Q
@@ -225,12 +191,8 @@ L
 .idea/libraries/Dart_SDK.xml,a/9/a9cc79449f536988c9a3fd2c84e3dfda3be04f09
 U
 %.idea/runConfigurations/main_dart.xml,4/0/4075432bf12db9b56969c95a525e03d742f7e86d
-J
-lib/intro/kasie_intro.dart,8/2/82f248876dbd4c1eae928a0af1a06ab11db3b739
 Y
 )lib/ui/widgets/searching_cities_busy.dart,d/5/d5b0088125e0c046a4b8257f01477b096edba8a8
-P
- lib/ui/widgets/color_picker.dart,7/e/7eb0d306c2604ec9de16b2c2c3c14e39fcdbf9e3
 ^
 .android/app/src/main/res/drawable/app_icon.xml,4/1/41be73f05525cc44d6c6cf9f8c491ad0a1dae296
 ^
@@ -245,10 +207,6 @@ V
 &lib/ui/widgets/route_list_minimum.dart,5/b/5b7d7eda01a46aa306403ba9c998f47a7c1744ae
 <
 pubspec.yaml,e/8/e8e045469170189f1d6ef12576bd01af132b1018
-H
-lib/ui/landing_page.dart,1/e/1e9c69a1cf5510467046222883bb0a3b57b4cb0a
-O
-kasie_transie_route_builder.iml,7/a/7a4b0ad485bf3863eb11f964b3d18cb9cdd6226c
 S
 #.idea/libraries/Flutter_Plugins.xml,e/8/e8bbc0fdfcefee9aa7b463c83a8a480b92333860
 X
@@ -257,3 +215,13 @@ H
 android/app/build.gradle,5/9/594ba479000e0bb5513707b709ad1cd52da9063a
 =
 lib/main.dart,a/8/a8ea5273939a12e805641671b79e5eaeaab1e231
+G
+lib/utils/distance.dart,2/a/2ab7af5153537080a28eacd480d259835b8c0ccc
+L
+lib/utils/new_estimator.dart,e/4/e43e5b9942ea6b67902846d873a65168c824bbe5
+Q
+!lib/ui/maps/route_map_editor.dart,d/c/dc6e28c2fcc86545694b989bc9281fb438ace395
+J
+lib/intro/splash_page.dart,5/1/519c5669eb9f9000279cb6abe40f1287040a0798
+O
+lib/ui/widgets/city_widget.dart,5/2/52b48125290257b080c1538e83203e89e8e448d7

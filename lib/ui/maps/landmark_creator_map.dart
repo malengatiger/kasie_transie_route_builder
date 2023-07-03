@@ -405,7 +405,6 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
         associationId: widget.route.associationId!,
         routeName: widget.route.name!,
         authToken: '');
-
     landmarkIsolate.addRouteLandmark(parameters);
     pp('$mm landmark isolate started! ... 😎😎😎 Good Fucking Luck!!');
   }
@@ -541,7 +540,7 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
                                         Text(
                                           'Route Landmarks',
                                           style:
-                                              myTextStyleMediumLarge(context),
+                                              myTextStyleMediumLarge(context, 20),
                                         )
                                       ],
                                     ),
@@ -652,7 +651,7 @@ class LandmarkCreatorMapState extends State<LandmarkCreatorMap> {
                                   ),
                                   Text(
                                     'New Landmark',
-                                    style: myTextStyleMediumLarge(context),
+                                    style: myTextStyleMediumLarge(context, 20),
                                   ),
                                   const SizedBox(
                                     height: 20,

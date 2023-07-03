@@ -13,6 +13,7 @@ import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_route_builder/ui/maps/route_creator_map.dart';
+import 'package:kasie_transie_route_builder/ui/tiny_bloc.dart';
 
 import '../widgets/color_pad.dart';
 
@@ -96,7 +97,8 @@ class RouteMapViewerState extends State<RouteMapViewer> {
       final m = await dataApiDog.updateRouteColor(
           routeId: widget.routeId!, color: stringColor!);
       pp('$mm ... color has been updated ... result: $m ; 0 is good!');
-      _getRoute();
+      tinyBloc.setRouteId(widget.routeId);
+      _getRouteLandmarks();
     } catch (e) {
       pp(e);
     }
@@ -159,7 +161,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
 
   Future _getRouteLandmarks() async {
     routeLandmarks =
-        await listApiDog.getRouteLandmarks(widget.routeId!, true);
+        await listApiDog.getRouteLandmarks(widget.routeId, true);
     pp('$mm _getRouteLandmarks ...  route: ${widget.routeId}; found: ${routeLandmarks.length} ');
 
     landmarkIndex = 0;
@@ -298,7 +300,7 @@ class RouteMapViewerState extends State<RouteMapViewer> {
       final latLng = LatLng(
           route!.routeStartEnd!.startCityPosition!.coordinates.last,
           route!.routeStartEnd!.startCityPosition!.coordinates.first);
-      var cameraPos = CameraPosition(target: latLng, zoom: 11.0);
+      var cameraPos = CameraPosition(target: latLng, zoom: 16.0);
       final GoogleMapController controller = await _mapController.future;
       controller.animateCamera(CameraUpdate.newCameraPosition(cameraPos));
       setState(() {});

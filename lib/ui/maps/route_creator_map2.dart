@@ -438,7 +438,7 @@ class RouteCreatorMap2State extends State<RouteCreatorMap2> {
                             ),
                             Text(
                               'Route Mapper',
-                              style: myTextStyleMediumLarge(context),
+                              style: myTextStyleMediumLarge(context, 20),
                             ),
                             Row(
                               children: [

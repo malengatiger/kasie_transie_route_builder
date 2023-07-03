@@ -37,6 +37,7 @@ class Assets {
   static const String l10nEs = 'assets/l10n/es.json';
   static const String l10nFr = 'assets/l10n/fr.json';
   static const String l10nIg = 'assets/l10n/ig.json';
+  static const String l10nMyKeys = 'assets/l10n/myKeys.txt';
   static const String l10nPt = 'assets/l10n/pt.json';
   static const String l10nSn = 'assets/l10n/sn.json';
   static const String l10nSt = 'assets/l10n/st.json';

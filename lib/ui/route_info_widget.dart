@@ -111,7 +111,7 @@ class _RouteInfoWidgetState extends State<RouteInfoWidget> {
             ),
             Text(
               'Route Details',
-              style: myTextStyleMediumLarge(context),
+              style: myTextStyleMediumLarge(context, 20),
             ),
             const SizedBox(
               height: 48,

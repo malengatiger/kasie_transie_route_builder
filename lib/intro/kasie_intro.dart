@@ -167,7 +167,7 @@ class KasieIntroState extends State<KasieIntro>
                 text: lorem,
               ),
               IntroPage(
-                  title: 'Organizations',
+                  title: 'Associations',
                   assetPath: 'assets/intro/pic5.jpg',
                   text: lorem),
               IntroPage(
@@ -175,7 +175,7 @@ class KasieIntroState extends State<KasieIntro>
                   assetPath: 'assets/intro/pic1.jpg',
                   text: lorem),
               IntroPage(
-                title: 'Field Monitors',
+                title: 'Marshals',
                 assetPath: 'assets/intro/pic5.jpg',
                 text: lorem,
               ),

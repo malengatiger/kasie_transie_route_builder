@@ -79,7 +79,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     country = await widget.prefs.getCountry();
     settingsModel = await widget.prefs.getSettings();
     if (settingsModel == null) {
-      final res = await listApiDog.getSettings(user!.associationId!);
+      final res = await listApiDog.getSettings(user!.associationId!, false);
       if (res.isNotEmpty) {
         pp('$mm ${res.length} ${E.redDot} ${E.redDot} settings found.');
         myPrettyJsonPrint(res.first.toJson());

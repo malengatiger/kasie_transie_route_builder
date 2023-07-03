@@ -306,7 +306,7 @@ class CityCreatorMapState extends ConsumerState<CityCreatorMap> {
                                         Text(
                                           'Place Maker',
                                           style:
-                                              myTextStyleMediumLarge(context),
+                                              myTextStyleMediumLarge(context, 20),
                                         )
                                       ],
                                     ),
@@ -372,7 +372,7 @@ class CityCreatorMapState extends ConsumerState<CityCreatorMap> {
                                   ),
                                   Text(
                                     'New Place',
-                                    style: myTextStyleMediumLarge(context),
+                                    style: myTextStyleMediumLarge(context, 20),
                                   ),
                                   const SizedBox(
                                     height: 20,

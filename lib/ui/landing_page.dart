@@ -43,7 +43,7 @@ class LandingPageState extends State<LandingPage>
     if (user != null) {
       var sett = await prefs.getSettings();
       if (sett == null) {
-        final settList = await listApiDog.getSettings(user!.associationId!);
+        final settList = await listApiDog.getSettings(user.associationId!, false);
         if (settList.isNotEmpty) {
           sett = settList.first;
           await prefs.saveSettings(sett);
