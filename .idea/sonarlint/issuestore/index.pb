@@ -195,18 +195,8 @@ Y
 )lib/ui/widgets/searching_cities_busy.dart,d/5/d5b0088125e0c046a4b8257f01477b096edba8a8
 ^
 .android/app/src/main/res/drawable/app_icon.xml,4/1/41be73f05525cc44d6c6cf9f8c491ad0a1dae296
-Q
-!.idea/libraries/Dart_Packages.xml,f/c/fc67c2d2441e33af1dbd1e910281523d1ce74b4a
-^
-.windows/flutter/generated_plugin_registrant.cc,a/4/a460a0a443b57f23ba67cbcc77064889847c76a7
-W
-'windows/flutter/generated_plugins.cmake,8/8/88ca6865187a33a9504c7309c5e20c833b7b0094
-@
-ios/Podfile.lock,6/f/6fc5efc9eba1a38c53e9a557a6ebda2b662185e1
 V
 &lib/ui/widgets/route_list_minimum.dart,5/b/5b7d7eda01a46aa306403ba9c998f47a7c1744ae
-S
-#.idea/libraries/Flutter_Plugins.xml,e/8/e8bbc0fdfcefee9aa7b463c83a8a480b92333860
 <
 pubspec.yaml,e/8/e8e045469170189f1d6ef12576bd01af132b1018
 X
@@ -223,5 +213,9 @@ Q
 !lib/ui/maps/route_map_editor.dart,d/c/dc6e28c2fcc86545694b989bc9281fb438ace395
 J
 lib/intro/splash_page.dart,5/1/519c5669eb9f9000279cb6abe40f1287040a0798
-O
-lib/ui/widgets/city_widget.dart,5/2/52b48125290257b080c1538e83203e89e8e448d7
+P
+ lib/ui/widgets/color_picker.dart,7/e/7eb0d306c2604ec9de16b2c2c3c14e39fcdbf9e3
+I
+lib/generated/assets.dart,5/b/5b815209f3ac1d4b94a4211dbfb903428d4ed1c2
+W
+'lib/ui/calculated_distances_widget.dart,c/a/cabdfbb9b73a2363978fb7b04e111dbbac01682e

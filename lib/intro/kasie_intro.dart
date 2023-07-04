@@ -77,47 +77,45 @@ class KasieIntroState extends State<KasieIntro>
   onSignInWithEmail() async {
     pp('$mm ...  onSignInWithEmail');
 
-    var res = await Navigator.of(context).push(MaterialPageRoute(
-        builder: (ctx) => const EmailAuthSignin()));
-    pp('$mm ... returned from sign in .... $res');
-    if (res is lib.User) {
-      pp('$mm ... returned from sign in .... $res');
-      pp('$mm ... User is fine to this point');
-
-      onSuccessfulSignIn(res);
-    }
+    navigateWithScale(
+        EmailAuthSignin(onGoodSignIn: () {
+          onSuccessfulSignIn();
+        }, onSignInError: () {
+          showSnackBar(message: "Sign In failed", context: context);
+        }),
+        context);
   }
 
   onSignInWithPhone() async {
     pp('$mm ... onSignInWithPhone ....');
 
-    var res = await Navigator.of(context).push(MaterialPageRoute(
-        builder: (ctx) => PhoneAuthSignin(
-            dataApiDog: widget.dataApiDog,
-            onSuccessfulSignIn: onSuccessfulSignIn)));
-    pp('$mm ... returned from sign in .... $res');
-    if (res is lib.User) {
-      pp('$mm ... returned from sign in .... $res');
-      pp('$mm ... User is fine to this point');
-
-      onSuccessfulSignIn(res);
-    }
+    navigateWithScale(
+        PhoneAuthSignin(
+            dataApiDog: dataApiDog,
+            onGoodSignIn: () {
+              onSuccessfulSignIn();
+            },
+            onSignInError: () {
+              showSnackBar(message: "Sign In failed", context: context);
+            }),
+        context);
   }
 
   onRegister() {
     pp('$mm ... onRegister ....');
   }
 
-  void onSignIn() async {
+  void onSignIn() async {}
 
-  }
+  void onSuccessfulSignIn() async {
+    var user = await prefs.getUser();
 
-  void onSuccessfulSignIn(lib.User p1) {
-    pp('$mm ... onSuccessfulSignIn .... ${p1.name}');
-    Navigator.of(context).pop(p1);
-    navigateWithScale(
-        AssociationRoutes(AssociationParameter(p1.associationId!, true), p1.associationName!),
-        context);
+    if (mounted) {
+      navigateWithScale(
+          AssociationRoutes(AssociationParameter(user!.associationId!, false),
+              user.associationName!),
+          context);
+    }
   }
 
   void _onPageChanged(int value) {}
@@ -148,7 +146,10 @@ class KasieIntroState extends State<KasieIntro>
             preferredSize: Size.fromHeight(authed ? 80 : 124),
             child: Column(
               children: [
-                Header(onSignInWithEmail: onSignInWithEmail, onSignInWithPhone: onSignInWithPhone, onRegister: onRegister),
+                Header(
+                    onSignInWithEmail: onSignInWithEmail,
+                    onSignInWithPhone: onSignInWithPhone,
+                    onRegister: onRegister),
                 const SizedBox(
                   height: 12,
                 ),
@@ -223,61 +224,76 @@ class KasieIntroState extends State<KasieIntro>
       ),
     ));
   }
-
-
 }
 
 class Header extends StatelessWidget {
-  const Header({Key? key, required this.onSignInWithEmail, required this.onSignInWithPhone, required this.onRegister}) : super(key: key);
+  const Header(
+      {Key? key,
+      required this.onSignInWithEmail,
+      required this.onSignInWithPhone,
+      required this.onRegister})
+      : super(key: key);
 
   final Function onSignInWithEmail, onSignInWithPhone, onRegister;
   @override
   Widget build(BuildContext context) {
-    return  Card(
+    return Card(
       shape: getRoundedBorder(radius: 16),
       elevation: 8,
       child: DropdownButton<int>(
         hint: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Text('Please select the kind of sign in', style: myTextStyleMedium(context),),
+          child: Text(
+            'Please select the kind of sign in',
+            style: myTextStyleMedium(context),
+          ),
         ),
         items: const [
           DropdownMenuItem(
               value: 0,
-              child: Row(children: [
-            Icon(Icons.phone),
-            SizedBox(width: 20,),
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('Sign in with your phone'),
-            ),
-
-          ],)),
+              child: Row(
+                children: [
+                  Icon(Icons.phone),
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('Sign in with your phone'),
+                  ),
+                ],
+              )),
           DropdownMenuItem(
               value: 1,
-              child: Row(children: [
-            Icon(Icons.email),
-            SizedBox(width: 20,),
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('Sign in with your email address'),
-            ),
-
-          ],)),
+              child: Row(
+                children: [
+                  Icon(Icons.email),
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('Sign in with your email address'),
+                  ),
+                ],
+              )),
           DropdownMenuItem(
               value: 2,
-              child: Row(children: [
-            Icon(Icons.edit),
-            SizedBox(width: 20,),
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('Register Your Association'),
-            ),
-
-          ],)),
+              child: Row(
+                children: [
+                  Icon(Icons.edit),
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('Register Your Association'),
+                  ),
+                ],
+              )),
         ],
         onChanged: (index) {
-          switch(index) {
+          switch (index) {
             case 0:
               onSignInWithPhone();
               break;
@@ -287,11 +303,9 @@ class Header extends StatelessWidget {
             case 2:
               onRegister();
               break;
-
           }
         },
       ),
     );
   }
 }
-
