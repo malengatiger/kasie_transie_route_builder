@@ -57,8 +57,6 @@ B
 android/.gitignore,f/1/f147f918c47edab19f40093aee6e93ae28629e1c
 I
 android/gradle.properties,7/f/7f1dfe9671149f8d9c88462c92762aed23bf28d2
-D
-android/build.gradle,1/3/13f012f60e18f38225ce59137db2e07d5d70b29c
 _
 /android/kasie_transie_route_builder_android.iml,2/a/2a109eddfdc2e0678ea2e8f0f57d6ea2962cced9
 F
@@ -197,14 +195,8 @@ Y
 .android/app/src/main/res/drawable/app_icon.xml,4/1/41be73f05525cc44d6c6cf9f8c491ad0a1dae296
 V
 &lib/ui/widgets/route_list_minimum.dart,5/b/5b7d7eda01a46aa306403ba9c998f47a7c1744ae
-<
-pubspec.yaml,e/8/e8e045469170189f1d6ef12576bd01af132b1018
 X
 (android/app/src/main/AndroidManifest.xml,e/f/ef79bfd51db69a15dbf5807c05bb249bdccb0556
-H
-android/app/build.gradle,5/9/594ba479000e0bb5513707b709ad1cd52da9063a
-=
-lib/main.dart,a/8/a8ea5273939a12e805641671b79e5eaeaab1e231
 G
 lib/utils/distance.dart,2/a/2ab7af5153537080a28eacd480d259835b8c0ccc
 L

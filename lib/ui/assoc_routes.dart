@@ -185,6 +185,14 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     }
   }
 
+  void navigateToAssocMaps() {
+    navigateWithScale(
+        AssociationRoutes(
+            AssociationParameter(user!.associationId!, false),
+            user!.associationName!),
+        context);
+  }
+
   void _refresh(bool refresh) async {
     setState(() {
       busy = true;
@@ -275,6 +283,12 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                 ],
               )),
           actions: [
+            // IconButton(
+            //     onPressed: () async {
+            //       pp('$mm go to maps .......');
+            //       navigateToAssocMaps();
+            //     },
+            //     icon: const Icon(Icons.map)),
             IconButton(
                 onPressed: () async {
                   pp('$mm refresh routes from backend .......');

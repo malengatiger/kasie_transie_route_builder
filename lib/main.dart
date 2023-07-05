@@ -10,7 +10,6 @@ import 'package:kasie_transie_library/bloc/theme_bloc.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
-import 'package:kasie_transie_library/utils/initializer.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_route_builder/ui/assoc_routes.dart';
 import 'package:kasie_transie_route_builder/ui/landing_page.dart';
@@ -43,7 +42,7 @@ Future<void> main() async {
 }
 
 int themeIndex = 0;
-late Locale locale;
+// late Locale locale;
 lib.User? me;
 
 class KasieTransieApp extends ConsumerWidget {
@@ -66,8 +65,6 @@ class KasieTransieApp extends ConsumerWidget {
                 'build: theme index has changed to ${snapshot.data!.themeIndex}'
                 '  and locale is ${snapshot.data!.locale.toString()}');
             themeIndex = snapshot.data!.themeIndex;
-            locale = snapshot.data!.locale;
-            pp(' 🔵 🔵 🔵 GeoApp: build: locale object received from stream: $locale');
           }
 
           return MaterialApp(
