@@ -195,8 +195,6 @@ Y
 .android/app/src/main/res/drawable/app_icon.xml,4/1/41be73f05525cc44d6c6cf9f8c491ad0a1dae296
 V
 &lib/ui/widgets/route_list_minimum.dart,5/b/5b7d7eda01a46aa306403ba9c998f47a7c1744ae
-X
-(android/app/src/main/AndroidManifest.xml,e/f/ef79bfd51db69a15dbf5807c05bb249bdccb0556
 G
 lib/utils/distance.dart,2/a/2ab7af5153537080a28eacd480d259835b8c0ccc
 L
