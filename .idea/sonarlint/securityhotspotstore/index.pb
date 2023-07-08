@@ -209,3 +209,7 @@ I
 lib/generated/assets.dart,5/b/5b815209f3ac1d4b94a4211dbfb903428d4ed1c2
 W
 'lib/ui/calculated_distances_widget.dart,c/a/cabdfbb9b73a2363978fb7b04e111dbbac01682e
+E
+lib/ui/tiny_bloc.dart,7/5/75fb9ade8cc038b694c16e8819fdaaf0275175dd
+X
+(lib/utils/route_distance_calculator.dart,5/7/576c3b43ca21597acf1e8e79e6d18b2f58d5b432
