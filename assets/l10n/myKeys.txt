@@ -1,5 +1,6 @@
 	 hashMap['cancel'] = 'cancel';
 	 hashMap['routeColour'] = 'routeColour';
+	 hashMap['countsSaved'] = 'countsSaved';
 	 hashMap['pt'] = 'pt';
 	 hashMap['numberOfCars'] = 'numberOfCars';
 	 hashMap['noLandmarks'] = 'noLandmarks';
@@ -16,6 +17,7 @@
 	 hashMap['password'] = 'password';
 	 hashMap['dispatches'] = 'dispatches';
 	 hashMap['selectVehicle'] = 'selectVehicle';
+	 hashMap['saveCounts'] = 'saveCounts';
 	 hashMap['problem'] = 'problem';
 	 hashMap['hereWeCome'] = 'hereWeCome';
 	 hashMap['startPhotoVideo'] = 'startPhotoVideo';
@@ -26,6 +28,7 @@
 	 hashMap['scannerWaiting'] = 'scannerWaiting';
 	 hashMap['searchVehicles'] = 'searchVehicles';
 	 hashMap['saveLandmark'] = 'saveLandmark';
+	 hashMap['pleaseTakePhotosVideos'] = 'pleaseTakePhotosVideos';
 	 hashMap['welcome'] = 'welcome';
 	 hashMap['dashboard'] = 'dashboard';
 	 hashMap['ig'] = 'ig';
@@ -44,6 +47,7 @@
 	 hashMap['loading'] = 'loading';
 	 hashMap['addCity'] = 'addCity';
 	 hashMap['zh'] = 'zh';
+	 hashMap['dispatchTaxi'] = 'dispatchTaxi';
 	 hashMap['sendCreds'] = 'sendCreds';
 	 hashMap[''recordVideo'] = ''recordVideo';
 	 hashMap['routeLandmarks'] = 'routeLandmarks';
@@ -53,6 +57,7 @@
 	 hashMap['routeViewer'] = 'routeViewer';
 	 hashMap['zu'] = 'zu';
 	 hashMap['makeVideos'] = 'makeVideos';
+	 hashMap['requestMedia'] = 'requestMedia';
 	 hashMap['emailAuth'] = 'emailAuth';
 	 hashMap['associations'] = 'associations';
 	 hashMap['initializingResources'] = 'initializingResources';
@@ -71,6 +76,7 @@
 	 hashMap['sn'] = 'sn';
 	 hashMap['createNewPlace'] = 'createNewPlace';
 	 hashMap['st'] = 'st';
+	 hashMap['countPassengers'] = 'countPassengers';
 	 hashMap['enterEmail'] = 'enterEmail';
 	 hashMap['unableToSignIn'] = 'unableToSignIn';
 	 hashMap['placeMaker'] = 'placeMaker';
@@ -92,6 +98,7 @@
 	 hashMap['taxiRoutes'] = 'taxiRoutes';
 	 hashMap['routeDetails'] = 'routeDetails';
 	 hashMap['days'] = 'days';
+	 hashMap['passengersIn'] = 'passengersIn';
 	 hashMap['routeMaps'] = 'routeMaps';
 	 hashMap['noVehicleScanned'] = 'noVehicleScanned';
 	 hashMap['endOfRoute'] = 'endOfRoute';
@@ -102,9 +109,11 @@
 	 hashMap['dataLoader'] = 'dataLoader';
 	 hashMap['date'] = 'date';
 	 hashMap['de'] = 'de';
+	 hashMap['scanVehicle'] = 'scanVehicle';
 	 hashMap['dispatch'] = 'dispatch';
 	 hashMap['waitingToRecordVideo'] = 'waitingToRecordVideo';
 	 hashMap['taxiMarshal'] = 'taxiMarshal';
+	 hashMap['startPassengerCount'] = 'startPassengerCount';
 	 hashMap['tapToClose'] = 'tapToClose';
 	 hashMap['pleaseSelectRoute'] = 'pleaseSelectRoute';
 	 hashMap['saveRoute'] = 'saveRoute';
@@ -126,6 +135,7 @@
 	 hashMap['calculateRouteDistance'] = 'calculateRouteDistance';
 	 hashMap['es'] = 'es';
 	 hashMap['registerAssoc'] = 'registerAssoc';
+	 hashMap['vehicleDispatched'] = 'vehicleDispatched';
 	 hashMap['selectRoute'] = 'selectRoute';
 	 hashMap['phoneNumber'] = 'phoneNumber';
 	 hashMap['emailAuthFailed'] = 'emailAuthFailed';
@@ -144,17 +154,22 @@
 	 hashMap['sendCode'] = 'sendCode';
 	 hashMap['vehicles'] = 'vehicles';
 	 hashMap['landmarks'] = 'landmarks';
+	 hashMap['confirmDispatch'] = 'confirmDispatch';
 	 hashMap['fr'] = 'fr';
 	 hashMap['dispatchError'] = 'dispatchError';
 	 hashMap['taxiNotOnRoute'] = 'taxiNotOnRoute';
 	 hashMap['duration'] = 'duration';
 	 hashMap['enterRouteName'] = 'enterRouteName';
+	 hashMap['numberDispatches'] = 'numberDispatches';
 	 hashMap['working'] = 'working';
 	 hashMap['takePicture'] = 'takePicture';
 	 hashMap['owner'] = 'owner';
 	 hashMap['ownerDash'] = 'ownerDash';
+	 hashMap['photosAndVideosNow'] = 'photosAndVideosNow';
+	 hashMap['passengersOut'] = 'passengersOut';
 	 hashMap['scanTheVehicle'] = 'scanTheVehicle';
 	 hashMap['yes'] = 'yes';
+	 hashMap['passengerCount'] = 'passengerCount';
 	 hashMap['vehicleMedia'] = 'vehicleMedia';
 	 hashMap['historyCar'] = 'historyCar';
 	 hashMap['serverUnreachable'] = 'serverUnreachable';
@@ -164,7 +179,11 @@
 	 hashMap['taxiOnRoute'] = 'taxiOnRoute';
 	 hashMap['noLocation'] = 'noLocation';
 	 hashMap['signedIn'] = 'signedIn';
+	 hashMap['ambassador'] = 'ambassador';
 	 hashMap['associationVehicles'] = 'associationVehicles';
 	 hashMap['createNewRoute'] = 'createNewRoute';
 	 hashMap['emailSignIn'] = 'emailSignIn';
+	 hashMap['currentPassengers'] = 'currentPassengers';
 	 hashMap['signInWithPhone'] = 'signInWithPhone';
+	 hashMap['loadingRoutes'] = 'loadingRoutes';
+	 hashMap['dispatchFailed'] = 'dispatchFailed';

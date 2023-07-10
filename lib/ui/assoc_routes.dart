@@ -64,7 +64,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   String? routeId;
 
   Future<void> initialize() async {
-    fcmBloc.subscribeToTopics();
+    fcmBloc.subscribeToTopics('RouteBuilder');
     routeChangesSub = fcmBloc.routeChangesStream.listen((event) {
       pp('$mm routeChangesStream delivered a routeId: $event');
       routeId = event;
