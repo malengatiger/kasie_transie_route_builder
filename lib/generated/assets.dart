@@ -5,6 +5,8 @@ class Assets {
   static const String assetsAnalysisOptions = 'assets/analysis_options.png';
   static const String assetsAvatar = 'assets/avatar.png';
   static const String assetsBatman = 'assets/batman.png';
+  static const String assetsCar1 = 'assets/car1.png';
+  static const String assetsCar2 = 'assets/car2.png';
   static const String assetsFilesPeople = 'assets/files/people.json';
   static const String assetsGio = 'assets/gio.png';
   static const String assetsIntlEn = 'assets/intl_en.arb';
