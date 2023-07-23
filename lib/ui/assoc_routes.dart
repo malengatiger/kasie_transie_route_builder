@@ -1,13 +1,16 @@
 import 'dart:async';
 
-import 'package:badges/badges.dart' as bd;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:focused_menu/focused_menu.dart';
-import 'package:focused_menu/modals.dart';
 import 'package:kasie_transie_library/bloc/data_api_dog.dart';
 import 'package:kasie_transie_library/bloc/list_api_dog.dart';
+import 'package:kasie_transie_library/data/color_and_locale.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
+import 'package:kasie_transie_library/l10n/translation_handler.dart';
+import 'package:kasie_transie_library/maps/city_creator_map.dart';
+import 'package:kasie_transie_library/maps/landmark_creator_map.dart';
+import 'package:kasie_transie_library/maps/route_creator_map2.dart';
+import 'package:kasie_transie_library/maps/route_map_viewer.dart';
 import 'package:kasie_transie_library/messaging/fcm_bloc.dart';
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/emojis.dart';
@@ -15,17 +18,12 @@ import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/initializer.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
-import 'package:kasie_transie_route_builder/ui/maps/city_creator_map.dart';
-import 'package:kasie_transie_route_builder/ui/maps/landmark_creator_map.dart';
-import 'package:kasie_transie_route_builder/ui/route_detail_form.dart';
-import 'package:kasie_transie_route_builder/ui/route_info_widget.dart';
-import 'package:kasie_transie_route_builder/ui/tiny_bloc.dart';
-import 'package:kasie_transie_route_builder/utils/route_distance_calculator.dart';
+import 'package:kasie_transie_library/utils/route_distance_calculator.dart';
+import 'package:kasie_transie_library/widgets/route_info_widget.dart';
+import 'package:kasie_transie_library/widgets/tiny_bloc.dart';
+import 'package:kasie_transie_route_builder/ui/route_editor.dart';
+import 'package:kasie_transie_route_builder/ui/route_list.dart';
 import 'package:responsive_builder/responsive_builder.dart';
-
-import 'maps/route_creator_map.dart';
-import 'maps/route_creator_map2.dart';
-import 'maps/route_map_viewer.dart';
 
 class AssociationRoutes extends ConsumerStatefulWidget {
   final AssociationParameter parameter;
@@ -57,11 +55,19 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   void initState() {
     super.initState();
     _listen();
+    _setTexts();
     _getInitialData();
     initialize();
   }
 
   String? routeId;
+  late ColorAndLocale colorAndLocale;
+  Future _setTexts() async {
+    colorAndLocale = await prefs.getColorAndLocale();
+    final loc = colorAndLocale.locale;
+
+    routesText = await translator.translate('routes', loc);
+  }
 
   Future<void> initialize() async {
     fcmBloc.subscribeToTopics('RouteBuilder');
@@ -109,7 +115,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   }
 
   lib.Route? selectedRoute;
-  String? selectedRouteId;
+  String? selectedRouteId, routesText = 'Routes';
 
   @override
   void dispose() {
@@ -187,9 +193,19 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
 
   void navigateToAssocMaps() {
     navigateWithScale(
-        AssociationRoutes(
-            AssociationParameter(user!.associationId!, false),
+        AssociationRoutes(AssociationParameter(user!.associationId!, false),
             user!.associationName!),
+        context);
+  }
+
+  void navigateToRouteInfo(lib.Route route) {
+    navigateWithScale(
+        RouteInfoWidget(
+            routeId: route.routeId, onClose: () {
+              Navigator.of(context).pop();
+        }, onNavigateToMapViewer: () {
+          navigateToMapViewer(selectedRoute!);
+        }),
         context);
   }
 
@@ -266,7 +282,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            'Taxi Routes',
+            routesText!,
             style: myTextStyleLarge(context),
           ),
           bottom: PreferredSize(
@@ -295,23 +311,23 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                   selectedRoute = null;
                   _refresh(true);
                 },
-                icon: const Icon(Icons.downloading)),
-            IconButton(
-                onPressed: () async {
-                  pp('$mm updateAssociationRouteLandmarks routes in backend .......');
-                  initializer.initialize();
-                },
                 icon: const Icon(Icons.refresh)),
-            IconButton(
-                onPressed: () async {
-                  pp('$mm navigate to city creator map .......');
-                  navigateWithFade(const CityCreatorMap(), context);
-                },
-                icon: const Icon(Icons.account_balance)),
+            // IconButton(
+            //     onPressed: () async {
+            //       pp('$mm updateAssociationRouteLandmarks routes in backend .......');
+            //       initializer.initialize();
+            //     },
+            //     icon: const Icon(Icons.refresh)),
+            // IconButton(
+            //     onPressed: () async {
+            //       pp('$mm navigate to city creator map .......');
+            //       navigateWithFade(const CityCreatorMap(), context);
+            //     },
+            //     icon: const Icon(Icons.account_balance)),
             IconButton(
                 onPressed: () {
                   navigateWithScale(
-                      RouteDetailForm(dataApiDog: dataApiDog, prefs: prefs),
+                      RouteEditor(dataApiDog: dataApiDog, prefs: prefs),
                       context);
                 },
                 icon: const Icon(Icons.add)),
@@ -341,6 +357,12 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                 onCalculateDistances: (r) {
                                   calculateDistances(r);
                                 },
+                                showRouteDetails: (r) {
+                                  setState(() {
+                                    selectedRoute = r;
+                                  });
+                                  navigateToRouteInfo(r);
+                                },
                               );
                             },
                             tablet: (ctx) {
@@ -366,6 +388,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                         onCalculateDistances: (r) {
                                           calculateDistances(r);
                                         },
+                                        showRouteDetails: (r) {},
                                       ),
                                     ),
                                     const SizedBox(
@@ -375,9 +398,10 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                       width: (width / 2),
                                       child: RouteInfoWidget(
                                         routeId: selectedRouteId,
-                                        routeName: selectedRoute == null
-                                            ? null
-                                            : selectedRoute!.name,
+                                        onClose: () {},
+                                        onNavigateToMapViewer: () {
+                                          navigateToMapViewer(selectedRoute!);
+                                        },
                                       ),
                                     ),
                                   ],
@@ -402,6 +426,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                         onCalculateDistances: (r) {
                                           calculateDistances(r);
                                         },
+                                        showRouteDetails: (route) {},
                                       ),
                                     ),
                                     const SizedBox(
@@ -411,9 +436,10 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                                       width: (width / 2),
                                       child: RouteInfoWidget(
                                         routeId: selectedRouteId,
-                                        routeName: selectedRoute == null
-                                            ? null
-                                            : selectedRoute!.name,
+                                        onClose: () {},
+                                        onNavigateToMapViewer: () {
+                                          navigateToMapViewer(selectedRoute!);
+                                        },
                                       ),
                                     ),
                                   ],
@@ -441,92 +467,109 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
         drawer: SizedBox(
           width: 400,
           child: Drawer(
-            child: ListView(
-              children: [
-                DrawerHeader(
-                    decoration: const BoxDecoration(
-                      color: Colors.black12,
-                      image: DecorationImage(
-                          image: AssetImage('assets/gio.png'), scale: .5),
+            child: Card(
+              elevation: 8,
+              child: ListView(
+                children: [
+                  DrawerHeader(
+                      decoration: const BoxDecoration(
+                          color: Colors.black12,
+                          image: DecorationImage(
+                              image: AssetImage('assets/gio.png'),
+                              scale: 0.1,
+                              opacity: 0.1)),
+                      child: SizedBox(
+                          height: 60,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(routesText!,
+                                  style: myTextStyleMediumLargeWithColor(
+                                      context, Colors.grey, 32)),
+                              const SizedBox(
+                                height: 48,
+                              )
+                            ],
+                          ))),
+                  const SizedBox(
+                    height: 64,
+                  ),
+                  ListTile(
+                    title: const Text('Add Place/Town/City'),
+                    leading: Icon(
+                      Icons.account_balance,
+                      color: Theme.of(context).primaryColor,
                     ),
-                    child: SizedBox(
-                        height: 60,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text('Routes Menu',
-                                style: myTextStyleMediumLargeWithColor(
-                                    context, Colors.grey, 32)),
-                            const SizedBox(
-                              height: 48,
-                            )
-                          ],
-                        ))),
-                const SizedBox(
-                  height: 64,
-                ),
-                ListTile(
-                  title: const Text('Add Place/Town/City'),
-                  leading: Icon(
-                    Icons.account_balance,
-                    color: Theme.of(context).primaryColor,
+                    subtitle: Text(
+                        'Create a new place that wil be used in your routes',
+                        style: myTextStyleSmall(context)),
+                    onTap: () {
+                      pp('$mm navigate to city creator map .......');
+                      navigateWithFade(const CityCreatorMap(), context);
+                    },
                   ),
-                  subtitle: Text(
-                      'Create a new place that wil be used in your routes',
-                      style: myTextStyleSmall(context)),
-                  onTap: () {
-                    pp('$mm navigate to city creator map .......');
-                    navigateWithFade(const CityCreatorMap(), context);
-                  },
-                ),
-                const SizedBox(
-                  height: 32,
-                ),
-                ListTile(
-                  title: const Text('Add New Route'),
-                  leading: Icon(Icons.directions_bus,
-                      color: Theme.of(context).primaryColor),
-                  subtitle: Text('Create a new route',
-                      style: myTextStyleSmall(context)),
-                  onTap: () {
-                    navigateWithScale(
-                        RouteDetailForm(dataApiDog: dataApiDog, prefs: prefs),
-                        context);
-                  },
-                ),
-                const SizedBox(
-                  height: 32,
-                ),
-                ListTile(
-                  title: const Text('Calculate Route Distances'),
-                  leading: Icon(Icons.calculate,
-                      color: Theme.of(context).primaryColor),
-                  subtitle: Text(
-                    'Calculate distances between landmarks in the route',
-                    style: myTextStyleSmall(context),
+                  const SizedBox(
+                    height: 32,
                   ),
-                  onTap: () {
-                    pp('$mm starting distance calculation ...');
-                    routeDistanceCalculator
-                        .calculateAssociationRouteDistances();
-                  },
-                ),
-                const SizedBox(
-                  height: 32,
-                ),
-                ListTile(
-                  title: const Text('Refresh Route Data'),
-                  leading: Icon(Icons.refresh,
-                      color: Theme.of(context).primaryColor),
-                  subtitle: Text(
-                    'Fetch refreshed route data from the Mother Ship',
-                    style: myTextStyleSmall(context),
+                  ListTile(
+                    title: const Text('Add New Route'),
+                    leading: Icon(Icons.directions_bus,
+                        color: Theme.of(context).primaryColor),
+                    subtitle: Text('Create a new route',
+                        style: myTextStyleSmall(context)),
+                    onTap: () {
+                      navigateWithScale(
+                          RouteEditor(dataApiDog: dataApiDog, prefs: prefs),
+                          context);
+                    },
                   ),
-                  onTap: () {
-                    _refresh(true);
-                  },
-                ),
-              ],
+                  const SizedBox(
+                    height: 32,
+                  ),
+                  ListTile(
+                    title: const Text('Calculate Route Distances'),
+                    leading: Icon(Icons.calculate,
+                        color: Theme.of(context).primaryColor),
+                    subtitle: Text(
+                      'Calculate distances between landmarks in the route',
+                      style: myTextStyleSmall(context),
+                    ),
+                    onTap: () {
+                      pp('$mm starting distance calculation ...');
+                      routeDistanceCalculator
+                          .calculateAssociationRouteDistances();
+                    },
+                  ),
+                  const SizedBox(
+                    height: 32,
+                  ),
+                  ListTile(
+                    title: const Text('Refresh Route Data'),
+                    leading: Icon(Icons.refresh,
+                        color: Theme.of(context).primaryColor),
+                    subtitle: Text(
+                      'Fetch refreshed route data from the Mother Ship',
+                      style: myTextStyleSmall(context),
+                    ),
+                    onTap: () {
+                      _refresh(true);
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Navigate to Dashboard'),
+                    leading: Icon(Icons.dashboard,
+                        color: Theme.of(context).primaryColor),
+                    subtitle: Text(
+                      'View Totals',
+                      style: myTextStyleSmall(context),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -583,135 +626,6 @@ class WaitingForGodot extends StatelessWidget {
                   ],
                 ),
               )),
-        ),
-      ),
-    );
-  }
-}
-
-class RouteList extends StatelessWidget {
-  const RouteList(
-      {Key? key,
-      required this.navigateToMapViewer,
-      required this.navigateToLandmarks,
-      required this.navigateToCreatorMap,
-      required this.routes,
-      this.currentRoute,
-      required this.onSendRouteUpdateMessage,
-      required this.onCalculateDistances})
-      : super(key: key);
-
-  final Function(lib.Route) navigateToMapViewer;
-  final Function(lib.Route) navigateToLandmarks;
-  final Function(lib.Route) navigateToCreatorMap;
-  final Function(lib.Route) onSendRouteUpdateMessage;
-  final Function(lib.Route) onCalculateDistances;
-
-  final List<lib.Route> routes;
-  final lib.Route? currentRoute;
-
-  List<FocusedMenuItem> _getMenuItems(lib.Route route, BuildContext context) {
-    List<FocusedMenuItem> list = [];
-
-    list.add(FocusedMenuItem(
-        title: Text('View Route Map', style: myTextStyleMediumBlack(context)),
-        // backgroundColor: Theme.of(context).primaryColor,
-        trailingIcon: Icon(
-          Icons.map,
-          color: Theme.of(context).primaryColor,
-        ),
-        onPressed: () {
-          navigateToMapViewer(route);
-        }));
-    //
-    list.add(FocusedMenuItem(
-        title: Text('Route Landmarks', style: myTextStyleMediumBlack(context)),
-        trailingIcon: Icon(
-          Icons.water_damage_outlined,
-          color: Theme.of(context).primaryColor,
-        ),
-        onPressed: () {
-          navigateToLandmarks(route);
-        }));
-    //
-    list.add(FocusedMenuItem(
-        title: Text('Update Route', style: myTextStyleMediumBlack(context)),
-        // backgroundColor: Theme.of(context).primaryColor,
-        trailingIcon: Icon(
-          Icons.edit,
-          color: Theme.of(context).primaryColor,
-        ),
-        onPressed: () {
-          navigateToCreatorMap(route);
-        }));
-
-    list.add(FocusedMenuItem(
-        title: Text('Calculate Route Distances',
-            style: myTextStyleMediumBlack(context)),
-        // backgroundColor: Theme.of(context).primaryColor,
-        trailingIcon: Icon(
-          Icons.calculate,
-          color: Theme.of(context).primaryColor,
-        ),
-        onPressed: () {
-          onCalculateDistances(route);
-        }));
-    list.add(FocusedMenuItem(
-        title: Text('Send Route Update Message',
-            style: myTextStyleMediumBlack(context)),
-        // backgroundColor: Theme.of(context).primaryColor,
-        trailingIcon: Icon(
-          Icons.send,
-          color: Theme.of(context).primaryColor,
-        ),
-        onPressed: () {
-          onSendRouteUpdateMessage(route);
-        }));
-    return list;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(6.0),
-      child: Card(
-        elevation: 2,
-        shape: getRoundedBorder(radius: 16),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 16.0),
-          child: bd.Badge(
-            badgeContent: Text('${routes.length}'),
-            badgeStyle: const bd.BadgeStyle(padding: EdgeInsets.all(16)),
-            child: ListView.builder(
-                itemCount: routes.length,
-                itemBuilder: (ctx, index) {
-                  var elevation = 6.0;
-                  final rt = routes.elementAt(index);
-
-                  return FocusedMenuHolder(
-                    menuOffset: 24,
-                    duration: const Duration(milliseconds: 300),
-                    menuItems: _getMenuItems(rt, context),
-                    animateMenuItems: true,
-                    openWithTap: true,
-                    onPressed: () {
-                      pp('💛️️ tapped FocusedMenuHolder ...');
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 1.0),
-                      child: Card(
-                        shape: getRoundedBorder(radius: 16),
-                        elevation: elevation,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text('${rt.name}'),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-          ),
         ),
       ),
     );

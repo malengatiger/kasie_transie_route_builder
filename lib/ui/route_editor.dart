@@ -6,27 +6,26 @@ import 'package:kasie_transie_library/bloc/data_api_dog.dart';
 import 'package:kasie_transie_library/bloc/list_api_dog.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
 import 'package:kasie_transie_library/data/schemas.dart';
+import 'package:kasie_transie_library/l10n/translation_handler.dart';
+import 'package:kasie_transie_library/maps/route_creator_map2.dart';
 import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/device_location_bloc.dart';
 import 'package:kasie_transie_library/utils/emojis.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
+import 'package:kasie_transie_library/utils/local_finder.dart';
 import 'package:kasie_transie_library/utils/navigator_utils.dart';
 import 'package:kasie_transie_library/utils/parsers.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_library/widgets/city_selection.dart';
-import 'package:kasie_transie_route_builder/ui/maps/route_creator_map.dart';
+import 'package:kasie_transie_library/widgets/route_list_minimum.dart';
+import 'package:kasie_transie_library/widgets/searching_cities_busy.dart';
 import 'package:kasie_transie_route_builder/ui/route_detail_form_container.dart';
-import 'package:kasie_transie_route_builder/ui/widgets/route_list_minimum.dart';
-import 'package:kasie_transie_route_builder/ui/widgets/searching_cities_busy.dart';
 import 'package:realm/realm.dart';
 import 'package:responsive_builder/responsive_builder.dart' as responsive;
 import 'package:uuid/uuid.dart' as uu;
 
-import 'assoc_routes.dart';
-import 'widgets/color_picker.dart';
-
-class RouteDetailForm extends ConsumerStatefulWidget {
-  const RouteDetailForm(
+class RouteEditor extends ConsumerStatefulWidget {
+  const RouteEditor(
       {Key? key, this.route, required this.dataApiDog, required this.prefs})
       : super(key: key);
 
@@ -35,16 +34,16 @@ class RouteDetailForm extends ConsumerStatefulWidget {
   final Prefs prefs;
 
   @override
-  ConsumerState createState() => RouteDetailFormState();
+  ConsumerState createState() => RouteEditorState();
 }
 
-class RouteDetailFormState extends ConsumerState<RouteDetailForm>
+class RouteEditorState extends ConsumerState<RouteEditor>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late AnimationController _controller;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _routeNumberController = TextEditingController();
-  final mm = '🔵🔵🔵🔵🔵 RouteDetailForm 🔵🔵';
+  final mm = '🔵🔵🔵🔵🔵 RouteEditor 🔵🔵';
   lib.Route? route;
   lib.User? user;
   lib.Country? country;
@@ -55,23 +54,94 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
   SettingsModel? settingsModel;
   bool busy = false;
   var _cities = <City>[];
+  String routeEditor = 'Route Editor';
+  String createOrUpdate = 'createOrUpdate';
+  String routeStart = 'routeStart';
+  String routeEnd = 'routeEnd';
+  String selectStartEnd = 'selectStartEnd';
+  String routeName = 'routeName';
+  String saveRoute = 'saveRoute';
+  String tapBelowToStart = 'Tap to start',
+      routeColor = 'color',
+      no = 'no',
+      yes = 'yes',
+      routeOnWay = '',
+      selectStart = '',
+      selectEnd = '',
+      startOfRoute = '',
+      endOfRoute = '',
+      searchingCities = '',
+      nextStep = '',
+      pleaseEnterRouteName = 'please',
+      selectSerachArea = '',
+      doYouWantToMap = '';
+
+  bool findStartCity = false;
+  bool findEndCity = false;
+  bool _showTheFuckingSearch = false;
+  double radiusInKM = 100;
+  bool sendingRouteUpdateMessage = false;
 
   @override
   void initState() {
     _controller = AnimationController(vsync: this);
     super.initState();
+    _setTexts();
     _getUser();
     findCitiesByLocation(radiusInKM);
   }
 
-  void _handleRef() async {
-    final m = ref.watch(
-        routesProvider(AssociationParameter(user!.associationId!, false)));
-    if (m.hasValue) {
-      pp('$mm routesProvider has done it again! ❤️${m.value!.length} routes delivered');
-      routes = m.value!;
-      setState(() {});
-    }
+  Future _setTexts() async {
+    final c = await prefs.getColorAndLocale();
+    final loc = c.locale;
+    routeEditor = await translator.translate('routeEditor', loc);
+    createOrUpdate = await translator.translate('createOrUpdate', loc);
+    routeStart = await translator.translate('routeStart', loc);
+    routeEnd = await translator.translate('routeEnd', loc);
+    selectStartEnd = await translator.translate('selectStartEnd', loc);
+    routeName = await translator.translate('routeName', loc);
+    saveRoute = await translator.translate('saveRoute', loc);
+    routeEditor = await translator.translate('routeEditor', loc);
+    tapBelowToStart = await translator.translate('tapBelowToStart', loc);
+    routeColor = await translator.translate('routeColor', loc);
+    selectSerachArea = await translator.translate('selectSerachArea', loc);
+    doYouWantToMap = await translator.translate('doYouWantToMap', loc);
+
+    pleaseEnterRouteName =
+        await translator.translate('pleaseEnterRouteName', loc);
+
+    routeOnWay = await translator.translate('routeOnWay', loc);
+    selectStart = await translator.translate('selectStart', loc);
+    selectEnd = await translator.translate('selectEnd', loc);
+
+    startOfRoute = await translator.translate('startOfRoute', loc);
+    endOfRoute = await translator.translate('endOfRoute', loc);
+    searchingCities = await translator.translate('searchingCities', loc);
+
+    no = await translator.translate('no', loc);
+    yes = await translator.translate('yes', loc);
+    nextStep = await translator.translate('nextStep', loc);
+
+    setState(() {});
+  }
+
+  void _getRoutes() async {
+    // final m = ref.watch(
+    //     routesProvider(AssociationParameter(user!.associationId!, false)));
+    pp('$mm _getRoutes ...............');
+
+    final x = await listApiDog
+        .getRoutes(AssociationParameter(user!.associationId!, false));
+    setState(() {
+      routes = x;
+    });
+    pp('$mm _getRoutes ............... routes: ${routes.length}');
+
+    // if (m.hasValue) {
+    //   pp('$mm routesProvider has done it again! ❤️${m.value!.length} routes delivered');
+    //   routes = m.value!;
+    //   setState(() {});
+    // }
   }
 
   void _getUser() async {
@@ -95,7 +165,7 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     } else {
       pp('$mm ${E.nice} ${E.nice} ${E.nice} ${E.nice} -- nice, check sign in widget!!');
     }
-    _handleRef();
+    _getRoutes();
   }
 
   void findCitiesByLocation(double radius) async {
@@ -108,15 +178,25 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
       user = await prefs.getUser();
       pp('... ended location GPS .2..');
 
-      _cities = await listApiDog.findCitiesByLocation(LocationFinderParameter(
-          associationId: user!.associationId,
+      _cities = await localFinder.findNearestCities(
           latitude: loc.latitude,
           longitude: loc.longitude,
-          limit: 500,
-          radiusInKM: radius));
-      radiusInKM = radius;
-      // _cities.sort((a, b) => a.name!.compareTo(b.name!));
-      pp('$mm cities found by location: ${_cities.length} cities within $radius km ....');
+          radiusInMetres: (radius + 2) * 1000);
+
+      pp('$mm cities found on realm cache by location: ${_cities.length} cities within $radius km ....');
+      //todo - deal with magic number - put limit in settings
+
+      if (_cities.isEmpty) {
+        _cities = await listApiDog.findCitiesByLocation(LocationFinderParameter(
+            associationId: user!.associationId,
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            limit: 2000,
+            radiusInKM: radius));
+
+        radiusInKM = radius;
+        pp('$mm cities found by location: ${_cities.length} cities within $radius km ....');
+      }
     } catch (e) {
       pp(e);
     }
@@ -165,35 +245,36 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     super.dispose();
   }
 
+  bool sending = false;
   Future<void> onSubmitRequested() async {
     pp('$mm ................................. onSubmitRequested ...');
     //todo - validate!
     if (_formKey.currentState!.validate()) {
       pp('$mm ... validation is OK');
       showToast(
-        message: 'Route is on it\'s way!',
+        message: routeOnWay,
         backgroundColor: Theme.of(context).dialogBackgroundColor,
         textStyle: myTextStyleMediumPrimaryColor(context),
         context: context,
         padding: 28.0,
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 3),
       );
     } else {
       return;
     }
     if (startCity == null) {
       showToast(
-          message: 'Please select start of route',
+          message: selectStart,
           context: context,
           padding: 20.0,
           backgroundColor: Colors.amber,
           textStyle: myTextStyleMediumWithColor(context, Colors.red),
-          duration: const Duration(seconds: 5));
+          duration: const Duration(seconds: 3));
       return;
     }
     if (endCity == null) {
       showToast(
-          message: 'Please select end of route',
+          message: selectEnd,
           context: context,
           padding: 20.0,
           backgroundColor: Colors.amber,
@@ -201,6 +282,9 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
           duration: const Duration(seconds: 3));
       return;
     }
+    setState(() {
+      sending = true;
+    });
     final se = lib.RouteStartEnd(
       startCityId: startCity!.cityId!,
       startCityName: startCity!.name,
@@ -235,9 +319,11 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
     );
 
     try {
-      final m = await dataApiDog.addRoute(route);
+      await dataApiDog.addRoute(route);
+      pp('$mm ... route has been added ...');
+      myPrettyJsonPrint(route.toJson());
       if (mounted) {
-        _showDialog(m);
+        _showDialog(route);
       }
     } catch (e) {
       pp(e);
@@ -246,6 +332,9 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
           message: 'Route failed: $e',
           context: context);
     }
+    setState(() {
+      sending = false;
+    });
   }
 
   void _showDialog(lib.Route route) {
@@ -254,46 +343,39 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
         builder: (BuildContext context) {
           return AlertDialog(
               title: Text(
-                'Next Step?',
+                nextStep,
                 style: myTextStyleLarge(context),
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text('No'),
+                  child: Text(no),
                   onPressed: () {
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
                   },
                 ),
                 TextButton(
-                  child: const Text('Yes'),
+                  child: Text(yes),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    navigateWithScale(RouteCreatorMap(route: route), context);
+                    navigateWithScale(RouteCreatorMap2(route: route), context);
                   },
                 )
               ],
-              content: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+              content: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Do you want to start mapping the route?'),
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(doYouWantToMap),
                       ),
                     ],
                   )));
         });
   }
 
-  bool findStartCity = false;
-  bool findEndCity = false;
-  bool _showTheFuckingSearch = false;
-
-  double radiusInKM = 25;
-
-  bool sendingRouteUpdateMessage = false;
   void onSendRouteUpdateMessage() async {
     pp("$mm onSendRouteUpdateMessage .........");
     setState(() {
@@ -312,7 +394,8 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
           padding: 20,
           textStyle: myTextStyleMedium(context),
           backgroundColor: Colors.amber,
-          message: 'Route Update message sent OK', context: context);
+          message: 'Route Update message sent OK',
+          context: context);
     }
     setState(() {
       sendingRouteUpdateMessage = false;
@@ -321,17 +404,17 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
 
   @override
   Widget build(BuildContext context) {
-    var leftPadding = 64.0;
+    var leftPadding = 24.0;
     final type = getDeviceType();
     if (type == 'phone') {
-      leftPadding = 2.0;
+      leftPadding = 12.0;
     }
     final width = MediaQuery.of(context).size.width;
     return SafeArea(
         child: Scaffold(
       appBar: AppBar(
         title: Text(
-          'Route Editor',
+          routeEditor,
           style: myTextStyleLarge(context),
         ),
         bottom: const PreferredSize(
@@ -342,33 +425,51 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
           responsive.ScreenTypeLayout.builder(
             mobile: (ctx) {
               return Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(0.0),
                 child: busy
-                    ? const SearchingCitiesBusy()
-                    : RouteDetailFormContainer(
-                        formKey: _formKey,
-                        onSendRouteUpdateMessage: onSendRouteUpdateMessage,
-                        onRouteStartSearch: findNearestStartCity,
-                        onRouteEndSearch: findNearestEndCity,
-                        color: color,
-                        nameController: _nameController,
-                        routeNumberController: _routeNumberController,
-                        nearestEnd: endCity,
-                        nearestStart: startCity,
-                        onSubmit: onSubmitRequested,
-                        onColorSelected: (c, s) {
-                          setState(() {
-                            color = c;
-                            colorString = s;
-                          });
-                        },
-                        onRefresh: (radius) {
-                          radiusInKM = radius;
-                          findCitiesByLocation(radius);
-                        },
-                        radiusInKM: 20,
-                        numberOfCities: _cities.length,
-                      ),
+                    ? SearchingCitiesBusy(
+                        searchingCities: searchingCities,
+                      )
+                    : sending
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 4,
+                              backgroundColor: Colors.indigo,
+                            ),
+                          )
+                        : RouteDetailFormContainer(
+                            formKey: _formKey,
+                            onSendRouteUpdateMessage: onSendRouteUpdateMessage,
+                            onRouteStartSearch: findNearestStartCity,
+                            onRouteEndSearch: findNearestEndCity,
+                            color: color,
+                            nameController: _nameController,
+                            routeNumberController: _routeNumberController,
+                            nearestEnd: endCity,
+                            nearestStart: startCity,
+                            onSubmit: onSubmitRequested,
+                            onColorSelected: (c, s) {
+                              setState(() {
+                                color = c;
+                                colorString = s;
+                              });
+                            },
+                            onRefresh: (radius) {
+                              radiusInKM = radius;
+                              findCitiesByLocation(radius);
+                            },
+                            radiusInKM: 100,
+                            numberOfCities: _cities.length,
+                            createUpdate: createOrUpdate,
+                            routeName: routeName,
+                            routeColor: routeColor,
+                            pleaseEnterRouteName: pleaseEnterRouteName,
+                            routeEnd: routeEnd,
+                            routeStart: routeStart,
+                            tapBelowToStart: tapBelowToStart,
+                            saveRoute: saveRoute,
+                            selectSearchArea: selectSerachArea,
+                          ),
               );
             },
             tablet: (ctx) {
@@ -384,12 +485,21 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
                         onRouteStartSearch: findNearestStartCity,
                         onRouteEndSearch: findNearestEndCity,
                         color: color,
+                        selectSearchArea: selectSerachArea,
+                        saveRoute: saveRoute,
                         radiusInKM: radiusInKM,
                         nameController: _nameController,
                         routeNumberController: _routeNumberController,
                         nearestEnd: endCity,
                         nearestStart: startCity,
                         onSubmit: onSubmitRequested,
+                        createUpdate: createOrUpdate,
+                        routeName: routeName,
+                        routeColor: routeColor,
+                        pleaseEnterRouteName: pleaseEnterRouteName,
+                        routeEnd: routeEnd,
+                        routeStart: routeStart,
+                        tapBelowToStart: tapBelowToStart,
                         onColorSelected: (c, s) {
                           setState(() {
                             color = c;
@@ -422,11 +532,12 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
               ? Positioned(
                   top: 8.0,
                   left: leftPadding,
+                  right: leftPadding,
                   child: SizedBox(
                     width: 600,
                     height: 800,
                     child: CitySearch(
-                      title: findStartCity ? 'Start of Route' : 'End of Route',
+                      title: findStartCity ? startOfRoute : endOfRoute,
                       showScaffold: true,
                       onCitySelected: (c) {
                         pp('.... city at start: ${c.name}');
@@ -445,10 +556,14 @@ class RouteDetailFormState extends ConsumerState<RouteDetailForm>
                     ),
                   ))
               : const SizedBox(),
-          busy
-              ? const Positioned(
-                  top: 240, left: 80, child: SearchingCitiesBusy())
-              : const SizedBox()
+          // busy
+          //     ? Positioned(
+          //         top: 80,
+          //         left: 80,
+          //         child: SearchingCitiesBusy(
+          //           searchingCities: searchingCities,
+          //         ))
+          //     : const SizedBox()
         ],
       ),
     ));

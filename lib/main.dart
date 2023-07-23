@@ -12,6 +12,7 @@ import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
 import 'package:kasie_transie_route_builder/ui/assoc_routes.dart';
+import 'package:kasie_transie_route_builder/ui/dashboard.dart';
 import 'package:kasie_transie_route_builder/ui/landing_page.dart';
 import 'package:page_transition/page_transition.dart';
 
@@ -51,26 +52,26 @@ class KasieTransieApp extends ConsumerWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    pp('$mx ref from RiverPod Provider: ref: $ref');
-    var m = ref.watch(countryProvider);
-    if (m.hasValue) {
-      pp('$mx value from the watch: ${m.value?.length} from RiverPod Provide');
-    }
+    // pp('$mx ref from RiverPod Provider: ref: $ref');
+    // var m = ref.watch(countryProvider);
+    // if (m.hasValue) {
+    //   pp('$mx value from the watch: ${m.value?.length} from RiverPod Provide');
+    // }
 
     return StreamBuilder(
         stream: themeBloc.localeAndThemeStream,
         builder: (ctx, snapshot) {
           if (snapshot.hasData) {
             pp(' 🔵 🔵 🔵'
-                'build: theme index has changed to ${snapshot.data!.themeIndex}'
-                '  and locale is ${snapshot.data!.locale.toString()}');
+                'build: theme index has been set to ${snapshot.data!.themeIndex}'
+                '  and locale == ${snapshot.data!.locale.toString()}');
             themeIndex = snapshot.data!.themeIndex;
           }
 
           return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'KasieTransie',
-              theme: themeBloc.getTheme(themeIndex).lightTheme,
+              theme: themeBloc.getTheme(themeIndex).darkTheme,
               darkTheme: themeBloc.getTheme(themeIndex).darkTheme,
               themeMode: ThemeMode.system,
               home: AnimatedSplashScreen(
@@ -78,13 +79,7 @@ class KasieTransieApp extends ConsumerWidget {
                 animationDuration: const Duration(milliseconds: 2000),
                 curve: Curves.easeInCirc,
                 splashIconSize: 160.0,
-                nextScreen: me == null
-                    ? LandingPage(
-                        listApiDog: listApiDog,
-                        dataApiDog: dataApiDog,
-                        prefs: prefs)
-                    : AssociationRoutes(AssociationParameter(me!.associationId!, true), me!.associationName!),
-
+                nextScreen: const Dashboard(),
                 splashTransition: SplashTransition.fadeTransition,
                 pageTransitionType: PageTransitionType.leftToRight,
                 backgroundColor: Colors.teal.shade900,
