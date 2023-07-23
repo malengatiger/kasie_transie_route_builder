@@ -7,6 +7,7 @@ import 'package:kasie_transie_library/bloc/list_api_dog.dart';
 import 'package:kasie_transie_library/data/color_and_locale.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
 import 'package:kasie_transie_library/l10n/translation_handler.dart';
+import 'package:kasie_transie_library/maps/association_route_maps.dart';
 import 'package:kasie_transie_library/maps/city_creator_map.dart';
 import 'package:kasie_transie_library/maps/landmark_creator_map.dart';
 import 'package:kasie_transie_library/maps/route_creator_map2.dart';
@@ -193,8 +194,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
 
   void navigateToAssocMaps() {
     navigateWithScale(
-        AssociationRoutes(AssociationParameter(user!.associationId!, false),
-            user!.associationName!),
+        const AssociationRouteMaps(),
         context);
   }
 
@@ -307,11 +307,17 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
             //     icon: const Icon(Icons.map)),
             IconButton(
                 onPressed: () async {
+                  pp('$mm navigateToAssocMaps .......');
+                  navigateToAssocMaps();
+                },
+                icon:  Icon(Icons.map, color: Theme.of(context).primaryColor,)),
+            IconButton(
+                onPressed: () async {
                   pp('$mm refresh routes from backend .......');
                   selectedRoute = null;
                   _refresh(true);
                 },
-                icon: const Icon(Icons.refresh)),
+                icon:  Icon(Icons.refresh,color: Theme.of(context).primaryColor,)),
             // IconButton(
             //     onPressed: () async {
             //       pp('$mm updateAssociationRouteLandmarks routes in backend .......');
@@ -330,7 +336,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                       RouteEditor(dataApiDog: dataApiDog, prefs: prefs),
                       context);
                 },
-                icon: const Icon(Icons.add)),
+                icon:  Icon(Icons.add,color: Theme.of(context).primaryColor,)),
           ],
         ),
         body: Stack(
