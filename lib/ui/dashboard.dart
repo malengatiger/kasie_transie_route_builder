@@ -122,6 +122,7 @@ class DashboardState extends ConsumerState<Dashboard>
       _showVerifier = false;
       _showDashboard = true;
     });
+    fcmBloc.subscribeForRouteBuilder('RouteBuilder');
     _getData();
   }
 

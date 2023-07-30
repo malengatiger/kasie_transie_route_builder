@@ -71,18 +71,8 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   }
 
   Future<void> initialize() async {
-    fcmBloc.subscribeToTopics('RouteBuilder');
-    routeChangesSub = fcmBloc.routeChangesStream.listen((event) {
-      pp('$mm routeChangesStream delivered a routeId: $event');
-      routeId = event;
-      setState(() {});
-      if (mounted) {
-        showSnackBar(
-            message:
-                "A Route update has been issued. The download will happen automatically.",
-            context: context);
-      }
-    });
+    fcmBloc.subscribeForRouteBuilder('RouteBuilder');
+
   }
 
   void _listen() {
@@ -91,6 +81,17 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
       routes = routesFromStream;
       if (mounted) {
         setState(() {});
+      }
+    });
+    routeChangesSub = fcmBloc.routeChangesStream.listen((event) {
+      pp('$mm routeChangesStream delivered a routeId: $event');
+      routeId = event;
+      setState(() {});
+      if (mounted) {
+        showSnackBar(
+            message:
+            "A Route update has been issued. The download will happen automatically.",
+            context: context);
       }
     });
   }

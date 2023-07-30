@@ -4,16 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kasie_transie_library/bloc/data_api_dog.dart';
-import 'package:kasie_transie_library/bloc/list_api_dog.dart';
 import 'package:kasie_transie_library/bloc/theme_bloc.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
-import 'package:kasie_transie_library/providers/kasie_providers.dart';
 import 'package:kasie_transie_library/utils/functions.dart';
 import 'package:kasie_transie_library/utils/prefs.dart';
-import 'package:kasie_transie_route_builder/ui/assoc_routes.dart';
 import 'package:kasie_transie_route_builder/ui/dashboard.dart';
-import 'package:kasie_transie_route_builder/ui/landing_page.dart';
 import 'package:page_transition/page_transition.dart';
 
 import 'firebase_options.dart';
