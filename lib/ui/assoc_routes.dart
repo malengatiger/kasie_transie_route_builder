@@ -6,6 +6,7 @@ import 'package:kasie_transie_library/bloc/data_api_dog.dart';
 import 'package:kasie_transie_library/bloc/list_api_dog.dart';
 import 'package:kasie_transie_library/data/color_and_locale.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
+import 'package:kasie_transie_library/isolates/routes_isolate.dart';
 import 'package:kasie_transie_library/l10n/translation_handler.dart';
 import 'package:kasie_transie_library/maps/association_route_maps.dart';
 import 'package:kasie_transie_library/maps/city_creator_map.dart';
@@ -57,7 +58,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     super.initState();
     _listen();
     _setTexts();
-    _getInitialData();
+    _getInitialData(false);
     initialize();
   }
 
@@ -96,7 +97,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     });
   }
 
-  void _getInitialData() async {
+  void _getInitialData(bool refresh) async {
     setState(() {
       busy = true;
     });
@@ -107,7 +108,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
         selectedRouteId = selectedRoute!.routeId!;
       }
       routes = await listApiDog
-          .getRoutes(AssociationParameter(user!.associationId!, false));
+          .getRoutes(AssociationParameter(user!.associationId!, refresh));
     } catch (e) {
       pp(e);
     }
@@ -133,9 +134,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
       selectedRoute = route;
       selectedRouteId = route.routeId;
     });
-    pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
 
-    await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
       navigateWithScale(
           LandmarkCreatorMap(
@@ -154,9 +153,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
       selectedRoute = route;
       selectedRouteId = route.routeId;
     });
-    pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
 
-    await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
       //route = await listApiDog.
@@ -180,9 +177,6 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
       selectedRoute = route;
       selectedRouteId = route.routeId;
     });
-    pp('$mm Future.delayed(const Duration(seconds: 2) .....  ');
-
-    await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
       navigateWithScale(
@@ -216,6 +210,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
     });
     routes = await listApiDog
         .getRoutes(AssociationParameter(user!.associationId!, refresh));
+    routesIsolate.getRoutes(user!.associationId!);
     setState(() {
       busy = false;
     });
@@ -262,11 +257,35 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
   }
 
   void calculateDistances(lib.Route route) async {
+    pp('$mm ... calculateDistances for: ${route.name}');
+
     tinyBloc.setRouteId(route.routeId!);
     prefs.saveRoute(route);
-
-    routeDistanceCalculator.calculateRouteDistances(
-        route.routeId!, route.associationId!);
+    final type = getThisDeviceType();
+    try {
+      setState(() {
+        busy = true;
+      });
+      final dist = await routeDistanceCalculator.calculateRouteDistances(
+              route.routeId!, route.associationId!);
+      pp('$mm ... distances calculated: ${dist.length}, are we mounted? $mounted');
+      if (mounted) {
+        showToast(
+            backgroundColor: Colors.black,
+            textStyle: myTextStyleSmallWithColor(context, Colors.white),
+            padding: 20.0,
+            duration: const Duration(seconds: 2),
+            message: 'Distances calculated', context: context);
+        if (type == 'phone') {
+          navigateToRouteInfo(route);
+        }  
+      }
+    } catch (e) {
+      pp(e);
+    }
+    setState(() {
+      busy = false;
+    });
   }
 
   @override
@@ -300,12 +319,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                 ],
               )),
           actions: [
-            // IconButton(
-            //     onPressed: () async {
-            //       pp('$mm go to maps .......');
-            //       navigateToAssocMaps();
-            //     },
-            //     icon: const Icon(Icons.map)),
+
             IconButton(
                 onPressed: () async {
                   pp('$mm navigateToAssocMaps .......');
@@ -319,18 +333,7 @@ class AssociationRoutesState extends ConsumerState<AssociationRoutes> {
                   _refresh(true);
                 },
                 icon:  Icon(Icons.refresh,color: Theme.of(context).primaryColor,)),
-            // IconButton(
-            //     onPressed: () async {
-            //       pp('$mm updateAssociationRouteLandmarks routes in backend .......');
-            //       initializer.initialize();
-            //     },
-            //     icon: const Icon(Icons.refresh)),
-            // IconButton(
-            //     onPressed: () async {
-            //       pp('$mm navigate to city creator map .......');
-            //       navigateWithFade(const CityCreatorMap(), context);
-            //     },
-            //     icon: const Icon(Icons.account_balance)),
+
             IconButton(
                 onPressed: () {
                   navigateWithScale(

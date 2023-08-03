@@ -424,53 +424,53 @@ class RouteEditorState extends ConsumerState<RouteEditor>
         children: [
           responsive.ScreenTypeLayout.builder(
             mobile: (ctx) {
-              return Padding(
-                padding: const EdgeInsets.all(0.0),
-                child: busy
-                    ? SearchingCitiesBusy(
+              return busy
+                  ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: SearchingCitiesBusy(
                         searchingCities: searchingCities,
-                      )
-                    : sending
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 4,
-                              backgroundColor: Colors.indigo,
-                            ),
-                          )
-                        : RouteDetailFormContainer(
-                            formKey: _formKey,
-                            onSendRouteUpdateMessage: onSendRouteUpdateMessage,
-                            onRouteStartSearch: findNearestStartCity,
-                            onRouteEndSearch: findNearestEndCity,
-                            color: color,
-                            nameController: _nameController,
-                            routeNumberController: _routeNumberController,
-                            nearestEnd: endCity,
-                            nearestStart: startCity,
-                            onSubmit: onSubmitRequested,
-                            onColorSelected: (c, s) {
-                              setState(() {
-                                color = c;
-                                colorString = s;
-                              });
-                            },
-                            onRefresh: (radius) {
-                              radiusInKM = radius;
-                              findCitiesByLocation(radius);
-                            },
-                            radiusInKM: 100,
-                            numberOfCities: _cities.length,
-                            createUpdate: createOrUpdate,
-                            routeName: routeName,
-                            routeColor: routeColor,
-                            pleaseEnterRouteName: pleaseEnterRouteName,
-                            routeEnd: routeEnd,
-                            routeStart: routeStart,
-                            tapBelowToStart: tapBelowToStart,
-                            saveRoute: saveRoute,
-                            selectSearchArea: selectSerachArea,
+                      ),
+                  )
+                  : sending
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 4,
+                            backgroundColor: Colors.indigo,
                           ),
-              );
+                        )
+                      : RouteDetailFormContainer(
+                          formKey: _formKey,
+                          onSendRouteUpdateMessage: onSendRouteUpdateMessage,
+                          onRouteStartSearch: findNearestStartCity,
+                          onRouteEndSearch: findNearestEndCity,
+                          color: color,
+                          nameController: _nameController,
+                          routeNumberController: _routeNumberController,
+                          nearestEnd: endCity,
+                          nearestStart: startCity,
+                          onSubmit: onSubmitRequested,
+                          onColorSelected: (c, s) {
+                            setState(() {
+                              color = c;
+                              colorString = s;
+                            });
+                          },
+                          onRefresh: (radius) {
+                            radiusInKM = radius;
+                            findCitiesByLocation(radius);
+                          },
+                          radiusInKM: 100,
+                          numberOfCities: _cities.length,
+                          createUpdate: createOrUpdate,
+                          routeName: routeName,
+                          routeColor: routeColor,
+                          pleaseEnterRouteName: pleaseEnterRouteName,
+                          routeEnd: routeEnd,
+                          routeStart: routeStart,
+                          tapBelowToStart: tapBelowToStart,
+                          saveRoute: saveRoute,
+                          selectSearchArea: selectSerachArea,
+                        );
             },
             tablet: (ctx) {
               return responsive.OrientationLayoutBuilder(portrait: (ctx) {
@@ -556,14 +556,7 @@ class RouteEditorState extends ConsumerState<RouteEditor>
                     ),
                   ))
               : const SizedBox(),
-          // busy
-          //     ? Positioned(
-          //         top: 80,
-          //         left: 80,
-          //         child: SearchingCitiesBusy(
-          //           searchingCities: searchingCities,
-          //         ))
-          //     : const SizedBox()
+
         ],
       ),
     ));

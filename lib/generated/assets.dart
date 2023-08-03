@@ -9,6 +9,7 @@ class Assets {
   static const String assetsCar2 = 'assets/car2.png';
   static const String assetsFilesPeople = 'assets/files/people.json';
   static const String assetsGio = 'assets/gio.png';
+  static const String assetsGreenMarker = 'assets/green_marker.png';
   static const String assetsIntlEn = 'assets/intl_en.arb';
   static const String assetsVideo = 'assets/video.png';
   static const String assetsVideo2 = 'assets/video2.jpg';

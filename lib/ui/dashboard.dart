@@ -7,6 +7,7 @@ import 'package:kasie_transie_library/bloc/list_api_dog.dart';
 import 'package:kasie_transie_library/data/color_and_locale.dart';
 import 'package:kasie_transie_library/data/schemas.dart' as lib;
 import 'package:kasie_transie_library/isolates/country_cities_isolate.dart';
+import 'package:kasie_transie_library/isolates/routes_isolate.dart';
 import 'package:kasie_transie_library/l10n/translation_handler.dart';
 import 'package:kasie_transie_library/maps/city_creator_map.dart';
 import 'package:kasie_transie_library/maps/landmark_creator_map.dart';
@@ -123,7 +124,7 @@ class DashboardState extends ConsumerState<Dashboard>
       _showDashboard = true;
     });
     fcmBloc.subscribeForRouteBuilder('RouteBuilder');
-    _getData();
+    _getData(false);
   }
 
   void _listen() async {
@@ -145,7 +146,7 @@ class DashboardState extends ConsumerState<Dashboard>
 
   int citiesTotal = 0;
 
-  Future _getData() async {
+  Future _getData(bool refresh) async {
     pp('$mm ................... get data for ambassador dashboard ...');
     user = await prefs.getUser();
     setState(() {
@@ -153,8 +154,8 @@ class DashboardState extends ConsumerState<Dashboard>
     });
     try {
       if (user != null) {
-        await _getRoutes();
-        await _getLandmarks();
+        await _getRoutes(refresh);
+        await _getLandmarks(refresh);
         await _countRoutePoints();
         citiesTotal =
             await listApiDog.countCountryCities(user!.countryId!, false);
@@ -175,15 +176,18 @@ class DashboardState extends ConsumerState<Dashboard>
     }
   }
 
-  Future _getRoutes() async {
+  Future _getRoutes(bool refresh) async {
     pp('$mm ... ambassador dashboard; getting routes: ${routes.length} ...');
 
     routes = await listApiDog
-        .getRoutes(AssociationParameter(user!.associationId!, false));
+        .getRoutes(AssociationParameter(user!.associationId!, refresh));
+    if (refresh) {
+      routesIsolate.getRoutes(user!.associationId!);
+    }
     pp('$mm ... ambassador dashboard; routes: ${routes.length} ...');
   }
 
-  Future _getLandmarks() async {
+  Future _getLandmarks(bool refresh) async {
     routeLandmarks = await listApiDog.getAssociationRouteLandmarks(
         user!.associationId!, false);
     pp('$mm ... ambassador dashboard; routeLandmarks: ${routeLandmarks.length} ...');
@@ -381,7 +385,7 @@ class DashboardState extends ConsumerState<Dashboard>
             _showDashboard
                 ? IconButton(
                     onPressed: () {
-                      _getData();
+                      _getData(true);
                     },
                     icon: Icon(
                       Icons.refresh,
@@ -433,7 +437,7 @@ class DashboardState extends ConsumerState<Dashboard>
                                 _showVerifier = false;
                                 _showDashboard = true;
                               });
-                              _getData();
+                              _getData(true);
                             },
                             onError: () {},
                             onCancel: () {},
@@ -507,7 +511,7 @@ class DashboardState extends ConsumerState<Dashboard>
                                   _showVerifier = false;
                                   _showDashboard = true;
                                 });
-                                _getData();
+                                _getData(false);
                               },
                               onError: () {},
                               onCancel: () {},
@@ -578,7 +582,7 @@ class DashboardState extends ConsumerState<Dashboard>
                                   _showVerifier = false;
                                   _showDashboard = true;
                                 });
-                                _getData();
+                                _getData(false);
                               },
                               onError: () {},
                               onCancel: () {},
@@ -699,7 +703,7 @@ class DashboardState extends ConsumerState<Dashboard>
                       style: myTextStyleSmall(context),
                     ),
                     onTap: () {
-                      _getData();
+                      _getData(true);
                     },
                   ),
                 ],
